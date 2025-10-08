@@ -1,20 +1,19 @@
 package com.plutoo.androidwebview;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.RequestConfiguration;
+
+import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,45 +25,32 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Inizializza AdMob
-        MobileAds.initialize(this, initializationStatus -> {});
+        // 1) Forza TEST ADS su questo device (sicurezza policy)
+        // Metti il tuo device ID quando lo avrai (lo leggiamo da Logcat in futuro).
+        RequestConfiguration requestConfiguration = new RequestConfiguration.Builder()
+                .setTestDeviceIds(Arrays.asList(
+                        AdRequest.DEVICE_ID_EMULATOR // sempre ok per emulatore
+                        // , "INSERISCI_QUI_IL_TUO_TEST_DEVICE_ID"  // facoltativo: lo aggiungeremo più avanti
+                ))
+                .build();
+        MobileAds.setRequestConfiguration(requestConfiguration);
 
-        // WebView setup
+        // 2) Inizializza AdMob
+        MobileAds.initialize(this, initializationStatus -> { });
+
+        // 3) WebView
         webView = findViewById(R.id.webview);
         WebSettings ws = webView.getSettings();
         ws.setJavaScriptEnabled(true);
         ws.setDomStorageEnabled(true);
-        ws.setLoadWithOverviewMode(true);
-        ws.setUseWideViewPort(true);
-        ws.setSupportZoom(false);
-        // Per sicurezza, consenti contenuti misti (nel caso di asset esterni)
-        ws.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
-
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                Uri uri = request.getUrl();
-                String scheme = uri.getScheme() != null ? uri.getScheme() : "";
-
-                // Apri tel: mailto: e simili con le app esterne
-                if (scheme.equals("tel") || scheme.equals("mailto") || scheme.equals("geo") ) {
-                    Intent i = new Intent(Intent.ACTION_VIEW, uri);
-                    startActivity(i);
-                    return true;
-                }
-
-                // Tutto il resto rimane in WebView
-                return false;
-            }
-        });
-
+        webView.setWebViewClient(new WebViewClient());
         webView.loadUrl(WEB_URL);
 
-        // Banner AdMob (in activity_main.xml l'ID è quello di TEST, corretto per ora)
+        // 4) Banner (usa l'ID di TEST messo nel layout)
         adView = findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
         adView.loadAd(adRequest);
@@ -82,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         if (adView != null) adView.destroy();
+        if (webView != null) webView.destroy();
         super.onDestroy();
     }
 }
