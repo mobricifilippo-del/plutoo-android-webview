@@ -2,21 +2,18 @@ workflows:
   android_debug:
     name: Android Debug APK
     max_build_duration: 60
-    instance_type: linux # macchina Linux veloce ed economica
+    instance_type: linux
     environment:
       java: 17
-      android:
-        image: default
     scripts:
-      - name: Installa Gradle 8.7 e genera il wrapper
+      - name: Installa Gradle 8.7
         script: |
           curl -s "https://get.sdkman.io" | bash
           source "$HOME/.sdkman/bin/sdkman-init.sh"
           sdk install gradle 8.7
           gradle --version
-          gradle wrapper --gradle-version 8.7
       - name: Build debug APK
         script: |
-          ./gradlew --no-daemon clean :app:assembleDebug
+          ./gradlew assembleDebug || ./gradlew build
     artifacts:
       - app/build/outputs/apk/debug/*.apk
