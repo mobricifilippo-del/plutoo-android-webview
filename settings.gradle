@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "plutoo-android-webview"
+rootProject.name = "PlutooAndroidWebView"
 include(":app")
