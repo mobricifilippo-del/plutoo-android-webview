@@ -1,52 +1,42 @@
-name: Build Android APK
+name: Android Build (native)
 
 on:
   workflow_dispatch:
   push:
     branches: [ main ]
-    paths:
-      - "app/**"
-      - "Build.gradle"
-      - "settings.gradle"
-      - ".github/workflows/build-apk.yml"
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17 (Temurin)
+      - name: Set up Java 17 (Temurin)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: '17'
 
-      - name: Install Android SDK (cmdline-tools)
+      - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-
-      - name: Install Gradle 8.7 (manual, no SDKMAN)
-        shell: bash
-        run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip
-          unzip -q gradle-8.7-bin.zip -d $HOME
-          echo "$HOME/gradle-8.7/bin" >> "$GITHUB_PATH"
-          gradle --version
-          gradle wrapper --gradle-version 8.7
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
 
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses
 
+      - name: Set up Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v3
+
+      # Genera il Gradle Wrapper (non serve tenerlo nel repo)
+      - name: Generate Gradle Wrapper 8.7
+        run: gradle wrapper --gradle-version 8.7
+
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew --no-daemon clean assembleDebug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
+          name: app-debug.apk
+          path: "**/build/outputs/apk/debug/*.apk"
