@@ -1,8 +1,8 @@
-// Root build.gradle (non mettere plugin dell'app qui!)
+// Root build.gradle
 plugins {
-    id 'com.android.application' version '8.6.1' apply false
+    id("com.android.application") version "8.5.2" apply false
 }
 
 tasks.register("clean", Delete) {
-    delete rootProject.buildDir
+    delete(rootProject.buildDir)
 }
