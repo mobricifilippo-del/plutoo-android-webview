@@ -2,6 +2,13 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - "app/**"
+      - "Build.gradle"
+      - "settings.gradle"
+      - ".github/workflows/build-apk.yml"
 
 jobs:
   build:
@@ -11,37 +18,35 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 17 (Temurin)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
-      - name: Set up Android SDK
+      - name: Install Android SDK (cmdline-tools)
         uses: android-actions/setup-android@v3
 
-      - name: Install Android build tools & accept licenses
-        run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-
-      - name: Create local.properties (SDK path)
-        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-
-      - name: Install Gradle via SDKMAN (non-interattivo) e generare wrapper
+      - name: Install Gradle 8.7 (manual, no SDKMAN)
         shell: bash
         run: |
-          curl -s "https://get.sdkman.io" | bash
-          source "$HOME/.sdkman/bin/sdkman-init.sh"
-          yes | sdk install gradle 8.7
+          wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip
+          unzip -q gradle-8.7-bin.zip -d $HOME
+          echo "$HOME/gradle-8.7/bin" >> "$GITHUB_PATH"
           gradle --version
           gradle wrapper --gradle-version 8.7
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
 
-      - name: Upload APK
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Plutoo-APK
+          name: app-debug
           path: app/build/outputs/apk/debug/*.apk
