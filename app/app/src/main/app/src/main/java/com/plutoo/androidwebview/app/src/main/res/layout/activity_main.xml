@@ -8,12 +8,17 @@ import android.webkit.WebViewClient;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
+
 public class MainActivity extends AppCompatActivity {
 
-    // URL ufficiale della tua app (Vercel, senza nome/cognome)
+    // URL ufficiale della tua webapp (Vercel)
     private static final String WEB_URL = "https://plutoo-official.vercel.app/";
 
     private WebView webView;
+    private AdView adView;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -21,20 +26,27 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        webView = findViewById(R.id.webview);
-        WebSettings settings = webView.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);
-        settings.setDatabaseEnabled(true);
-        settings.setMediaPlaybackRequiresUserGesture(false);
+        // Inizializza AdMob
+        MobileAds.initialize(this, initializationStatus -> {});
 
+        // Banner
+        adView = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        adView.loadAd(adRequest);
+
+        // WebView
+        webView = findViewById(R.id.webview);
         webView.setWebViewClient(new WebViewClient());
+        WebSettings s = webView.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+
         webView.loadUrl(WEB_URL);
     }
 
     @Override
     public void onBackPressed() {
-        if (webView.canGoBack()) {
+        if (webView != null && webView.canGoBack()) {
             webView.goBack();
         } else {
             super.onBackPressed();
