@@ -2,6 +2,7 @@ package com.plutoo.androidwebview;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -11,88 +12,60 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.interstitial.InterstitialAd;
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
-import com.google.android.gms.ads.AdError;
-import com.google.android.gms.ads.LoadAdError;
 
 public class MainActivity extends AppCompatActivity {
 
-    // URL ufficiale (Vercel)
+    // URL ufficiale della tua webapp (Vercel)
     private static final String WEB_URL = "https://plutoo-official.vercel.app/";
-
-    // AdMob – i TUOI ID delle unità
-    // Banner (home)
-    private static final String ADMOB_BANNER_ID = "ca-app-pub-5458345293928736/8955087050";
-    // Interstitial (videomatch)
-    private static final String ADMOB_INTERSTITIAL_ID = "ca-app-pub-5458345293928736/8626895942";
 
     private WebView webView;
     private AdView adView;
-    private InterstitialAd interstitialAd;
-    private boolean interstitialShownOnce = false;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // layout con WebView + banner (activity_main.xml)
         setContentView(R.layout.activity_main);
 
-        // --- Mobile Ads init
+        // --- AdMob ---
         MobileAds.initialize(this, initializationStatus -> {});
-
-        // --- Banner
         adView = findViewById(R.id.adView);
-        adView.setAdUnitId(ADMOB_BANNER_ID);
-        adView.loadAd(new AdRequest.Builder().build());
+        AdRequest adRequest = new AdRequest.Builder().build();
+        adView.loadAd(adRequest);
+        // NB: nell'XML abbiamo lasciato l’ID banner di TEST:
+        //     ca-app-pub-3940256099942544/6300978111
+        // Quando AdMob approva, sostituiscilo col tuo ID reale.
 
-        // --- Interstitial (carico all'avvio, lo mostro la prima volta che la pagina finisce di caricarsi)
-        loadInterstitial();
-
-        // --- WebView
+        // --- WebView ---
         webView = findViewById(R.id.webview);
         WebSettings ws = webView.getSettings();
         ws.setJavaScriptEnabled(true);
         ws.setDomStorageEnabled(true);
         ws.setLoadWithOverviewMode(true);
         ws.setUseWideViewPort(true);
-        ws.setMediaPlaybackRequiresUserGesture(false); // per video autoplay (se consentito dalla pagina)
+        ws.setSupportZoom(false);
+        ws.setBuiltInZoomControls(false);
+        ws.setMediaPlaybackRequiresUserGesture(false);
 
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(WebView v, String url) {
-                super.onPageFinished(v, url);
-                // Mostra l’interstitial solo una volta dopo il primo caricamento
-                if (!interstitialShownOnce && interstitialAd != null) {
-                    interstitialAd.show(MainActivity.this);
-                    interstitialShownOnce = true;
-                }
-            }
-        });
-
+        webView.setWebViewClient(new WebViewClient());
         webView.loadUrl(WEB_URL);
     }
 
-    private void loadInterstitial() {
-        AdRequest request = new AdRequest.Builder().build();
-        InterstitialAd.load(
-                this,
-                ADMOB_INTERSTITIAL_ID,
-                request,
-                new InterstitialAdLoadCallback() {
-                    @Override
-                    public void onAdLoaded(InterstitialAd ad) {
-                        interstitialAd = ad;
-                    }
+    // Gestione tasto "indietro" per navigazione dentro la WebView
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && webView != null && webView.canGoBack()) {
+            webView.goBack();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
 
-                    @Override
-                    public void onAdFailedToLoad(LoadAdError loadAdError) {
-                        interstitialAd = null;
-                    }
-                }
-        );
+    // Ciclo di vita banner (best practice)
+    @Override
+    protected void onPause() {
+        if (adView != null) adView.pause();
+        super.onPause();
     }
 
     @Override
@@ -102,23 +75,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onPause() {
-        if (adView != null) adView.pause();
-        super.onPause();
-    }
-
-    @Override
     protected void onDestroy() {
         if (adView != null) adView.destroy();
         super.onDestroy();
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-        }
     }
 }
