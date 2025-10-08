@@ -1,14 +1,14 @@
 plugins {
-    id 'com.android.application'
+    id("com.android.application")
 }
 
 android {
-    namespace 'com.plutoo.androidwebview'
+    namespace "com.plutoo.app"        // puoi cambiarlo, va bene qualsiasi namespace unico
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.plutoo.androidwebview"
-        minSdk 23
+        applicationId "com.plutoo.app" // se vuoi, allinealo al namespace
+        minSdk 24
         targetSdk 34
         versionCode 1
         versionName "1.0"
@@ -20,12 +20,20 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
-            minifyEnabled false
+            // niente di speciale per ora
         }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.gms:play-services-ads:23.2.0'   // AdMob
+    implementation "androidx.core:core-ktx:1.13.1"
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation "com.google.android.material:material:1.12.0"
+    implementation "androidx.activity:activity:1.9.2"
+    implementation "androidx.webkit:webkit:1.11.0"
 }
