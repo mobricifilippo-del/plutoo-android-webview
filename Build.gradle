@@ -1,17 +1,7 @@
-// File di livello progetto
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        // nessun classpath speciale richiesto per AdMob
-    }
+plugins {
+    id 'com.android.application' version '8.5.2' apply false
 }
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }
