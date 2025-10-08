@@ -32,10 +32,35 @@ android {
     }
 }
 
+/**
+ * Blocchiamo dipendenze legacy e forziamo le equivalenti AndroidX.
+ */
+configurations.all {
+    // Niente pacchetti androidx.legacy
+    exclude group: "androidx.legacy", module: "legacy-support-core-utils"
+
+    // In caso qualcosa provi comunque a tirarla dentro, rimpiazziamo.
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == "androidx.legacy" &&
+            details.requested.name == "legacy-support-core-utils") {
+            // Usa core moderno al posto della legacy
+            details.useTarget("androidx.core:core:1.13.1")
+        }
+    }
+}
+
 dependencies {
+    // Fondamentali
     implementation "androidx.core:core:1.13.1"
     implementation "androidx.appcompat:appcompat:1.7.0"
     implementation "com.google.android.material:material:1.12.0"
     implementation "androidx.activity:activity:1.9.2"
-    implementation "androidx.webkit:webkit:1.9.0"  // stabile, compatibile
+    implementation "androidx.webkit:webkit:1.9.0"
+
+    // Aggiunte esplicite per soddisfare le transitività citate nei log
+    implementation "androidx.print:print:1.0.0"
+    implementation "androidx.recyclerview:recyclerview:1.3.2"
+    implementation "androidx.viewpager2:viewpager2:1.0.0"
+    implementation "androidx.transition:transition:1.5.0"
+    implementation "androidx.localbroadcastmanager:localbroadcastmanager:1.1.0"
 }
