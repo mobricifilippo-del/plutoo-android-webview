@@ -1,12 +1,15 @@
 package com.plutoo.androidwebview;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
-import android.view.KeyEvent;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.ads.AdRequest;
@@ -15,7 +18,7 @@ import com.google.android.gms.ads.MobileAds;
 
 public class MainActivity extends AppCompatActivity {
 
-    // URL ufficiale della tua webapp (Vercel)
+    // URL ufficiale (Vercel)
     private static final String WEB_URL = "https://plutoo-official.vercel.app/";
 
     private WebView webView;
@@ -23,20 +26,14 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // --- AdMob ---
+        // Inizializza AdMob
         MobileAds.initialize(this, initializationStatus -> {});
-        adView = findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        adView.loadAd(adRequest);
-        // NB: nell'XML abbiamo lasciato l’ID banner di TEST:
-        //     ca-app-pub-3940256099942544/6300978111
-        // Quando AdMob approva, sostituiscilo col tuo ID reale.
 
-        // --- WebView ---
+        // WebView setup
         webView = findViewById(R.id.webview);
         WebSettings ws = webView.getSettings();
         ws.setJavaScriptEnabled(true);
@@ -44,34 +41,42 @@ public class MainActivity extends AppCompatActivity {
         ws.setLoadWithOverviewMode(true);
         ws.setUseWideViewPort(true);
         ws.setSupportZoom(false);
-        ws.setBuiltInZoomControls(false);
-        ws.setMediaPlaybackRequiresUserGesture(false);
+        // Per sicurezza, consenti contenuti misti (nel caso di asset esterni)
+        ws.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
 
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                String scheme = uri.getScheme() != null ? uri.getScheme() : "";
+
+                // Apri tel: mailto: e simili con le app esterne
+                if (scheme.equals("tel") || scheme.equals("mailto") || scheme.equals("geo") ) {
+                    Intent i = new Intent(Intent.ACTION_VIEW, uri);
+                    startActivity(i);
+                    return true;
+                }
+
+                // Tutto il resto rimane in WebView
+                return false;
+            }
+        });
+
         webView.loadUrl(WEB_URL);
+
+        // Banner AdMob (in activity_main.xml l'ID è quello di TEST, corretto per ora)
+        adView = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        adView.loadAd(adRequest);
     }
 
-    // Gestione tasto "indietro" per navigazione dentro la WebView
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK && webView != null && webView.canGoBack()) {
+    public void onBackPressed() {
+        if (webView != null && webView.canGoBack()) {
             webView.goBack();
-            return true;
+        } else {
+            super.onBackPressed();
         }
-        return super.onKeyDown(keyCode, event);
-    }
-
-    // Ciclo di vita banner (best practice)
-    @Override
-    protected void onPause() {
-        if (adView != null) adView.pause();
-        super.onPause();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (adView != null) adView.resume();
     }
 
     @Override
