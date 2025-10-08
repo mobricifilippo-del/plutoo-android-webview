@@ -1,15 +1,14 @@
-plugins {
-    id 'com.android.application'
-}
+// Module: app
+apply plugin: 'com.android.application'
 
 android {
     namespace 'com.plutoo.androidwebview'
-    compileSdk 34
+    compileSdkVersion 34
 
     defaultConfig {
         applicationId "com.plutoo.androidwebview"
-        minSdk 24
-        targetSdk 34
+        minSdkVersion 24
+        targetSdkVersion 34
         versionCode 1
         versionName "1.0"
     }
@@ -19,11 +18,20 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        debug {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.webkit:webkit:1.10.0'
+    // (AdMob lo aggiungiamo nello STEP 6: prima facciamo il wrapper funzionante)
 }
