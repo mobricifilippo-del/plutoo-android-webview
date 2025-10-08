@@ -1,14 +1,15 @@
-// Module: app
-apply plugin: 'com.android.application'
+plugins {
+    id 'com.android.application'
+}
 
 android {
     namespace 'com.plutoo.androidwebview'
-    compileSdkVersion 34
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.plutoo.androidwebview"
-        minSdkVersion 24
-        targetSdkVersion 34
+        minSdk 23
+        targetSdk 34
         versionCode 1
         versionName "1.0"
     }
@@ -22,10 +23,18 @@ android {
             minifyEnabled false
         }
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    // Google Mobile Ads SDK (AdMob)
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.webkit:webkit:1.11.0'
+
+    // ✅ Google Mobile Ads (AdMob)
     implementation 'com.google.android.gms:play-services-ads:23.3.0'
 }
