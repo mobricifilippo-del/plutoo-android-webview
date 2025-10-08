@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace "com.plutoo.app"        // puoi cambiarlo, va bene qualsiasi namespace unico
+    namespace "com.plutoo.app"
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.plutoo.app" // se vuoi, allinealo al namespace
+        applicationId "com.plutoo.app"
         minSdk 24
         targetSdk 34
         versionCode 1
@@ -19,21 +19,24 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-        debug {
-            // niente di speciale per ora
-        }
+        debug { }
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    buildFeatures {
+        viewBinding true
+    }
 }
 
 dependencies {
-    implementation "androidx.core:core-ktx:1.13.1"
+    // niente Kotlin per evitare dipendenze inutili
+    implementation "androidx.core:core:1.13.1"
     implementation "androidx.appcompat:appcompat:1.7.0"
     implementation "com.google.android.material:material:1.12.0"
     implementation "androidx.activity:activity:1.9.2"
-    implementation "androidx.webkit:webkit:1.11.0"
+    implementation "androidx.webkit:webkit:1.10.0"
 }
