@@ -1,55 +1,22 @@
-package com.plutoo.androidwebview;
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-import android.annotation.SuppressLint;
-import android.os.Bundle;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
+    <!-- WebView sopra -->
+    <WebView
+        android:id="@+id/webview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/adView" />
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.MobileAds;
-
-public class MainActivity extends AppCompatActivity {
-
-    // URL ufficiale della tua webapp (Vercel)
-    private static final String WEB_URL = "https://plutoo-official.vercel.app/";
-
-    private WebView webView;
-    private AdView adView;
-
-    @SuppressLint("SetJavaScriptEnabled")
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        // Inizializza AdMob
-        MobileAds.initialize(this, initializationStatus -> {});
-
-        // Banner
-        adView = findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        adView.loadAd(adRequest);
-
-        // WebView
-        webView = findViewById(R.id.webview);
-        webView.setWebViewClient(new WebViewClient());
-        WebSettings s = webView.getSettings();
-        s.setJavaScriptEnabled(true);
-        s.setDomStorageEnabled(true);
-
-        webView.loadUrl(WEB_URL);
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-        }
-    }
-}
+    <!-- Banner AdMob in basso -->
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        ads:adSize="BANNER"
+        ads:adUnitId="ca-app-pub-5458345293928736/8955087050" />
+</RelativeLayout>
