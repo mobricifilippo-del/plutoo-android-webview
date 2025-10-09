@@ -1,26 +1,29 @@
-<!-- app/src/main/AndroidManifest.xml -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.plutoo.app">
 
-    <!-- Permessi -->
+    <!-- Permessi richiesti per AdMob e rete -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
-    <!-- La posizione è opzionale (non bloccare installazione su device senza GPS) -->
-    <uses-feature
-        android:name="android.hardware.location.gps"
-        android:required="false" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Advertising ID permission (richiesta da Google Mobile Ads) -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
     <application
-        android:label="Plutoo"
         android:allowBackup="true"
-        android:supportsRtl="true"
-        android:usesCleartextTraffic="false">
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
-        <!-- Usa il nome COMPLETO della classe, perché non c'è più l'attributo package -->
+        <!-- AdMob App ID: viene risolto dal placeholder ${admobAppId} (strings.xml / manifestPlaceholders) -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${admobAppId}" />
+
         <activity
-            android:name="com.plutoo.androidwebview.MainActivity"
-            android:exported="true">
+            android:name=".MainActivity"
+            android:exported="true"
+            android:hardwareAccelerated="true"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
