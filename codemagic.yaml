@@ -2,8 +2,9 @@ workflows:
   android_debug:
     name: Android Debug APK
     max_build_duration: 60
-    instance_type: linux_x2        # <= piano free
     environment:
+      vars:
+        ANDROID_SDK_ROOT: /opt/android-sdk-linux
       java: 17
     cache:
       cache_paths:
@@ -12,13 +13,7 @@ workflows:
     scripts:
       - name: Build debug APK
         script: |
-          set -euo pipefail
-          if [ ! -f "./gradlew" ]; then
-            echo "Gradle wrapper mancante: lo genero con Gradle preinstallato"
-            gradle wrapper --gradle-version 8.7
-          fi
-          chmod +x gradlew
-          ./gradlew --version
+          chmod +x ./gradlew
           ./gradlew clean assembleDebug --stacktrace
     artifacts:
       - app/build/outputs/apk/debug/*.apk
