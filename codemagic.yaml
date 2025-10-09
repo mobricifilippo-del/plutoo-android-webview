@@ -2,7 +2,7 @@ workflows:
   android_debug:
     name: Android Debug APK
     max_build_duration: 60
-    instance_type: linux_x2
+    instance_type: linux_x2        # <= piano free
     environment:
       java: 17
     cache:
@@ -13,20 +13,12 @@ workflows:
       - name: Build debug APK
         script: |
           set -euo pipefail
-
-          # 1) Se non c'è il wrapper, scarica Gradle "ufficiale" e crealo
           if [ ! -f "./gradlew" ]; then
-            echo "Gradle wrapper assente: scarico Gradle 8.7 e genero il wrapper..."
-            curl -L -o gradle.zip https://services.gradle.org/distributions/gradle-8.7-bin.zip
-            unzip -q gradle.zip
-            ./gradle-8.7/bin/gradle wrapper --gradle-version 8.7
+            echo "Gradle wrapper mancante: lo genero con Gradle preinstallato"
+            gradle wrapper --gradle-version 8.7
           fi
-
-          # 2) Usa sempre il wrapper
           chmod +x gradlew
           ./gradlew --version
-
-          # 3) Build
-          ./gradlew clean :app:assembleDebug --stacktrace --no-daemon
+          ./gradlew clean assembleDebug --stacktrace
     artifacts:
       - app/build/outputs/apk/debug/*.apk
