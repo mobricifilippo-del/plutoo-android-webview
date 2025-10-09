@@ -1,6 +1,6 @@
 workflows:
   android_debug:
-    name: Android Debug (WebView + AdMob)
+    name: Android Debug (FREE)
     max_build_duration: 60
     environment:
       vars:
@@ -18,21 +18,21 @@ workflows:
           source: true
 
     scripts:
-      # STEP 1: Installa Gradle 8.5 (compatibile con AGP 8.2.2)
+      # 1) Installa Gradle 8.5 (compatibile con AGP 8.2.2) e verifica
       - name: Install Gradle 8.5
         script: |
           echo "Installing Gradle 8.5 via SDKMAN"
           sdk install gradle 8.5 || sdk use gradle 8.5
           gradle -v
 
-      # STEP 2: Sincronizza dipendenze e pulizia usando 'gradle' diretto
+      # 2) Sincronizza dipendenze (niente wrapper: usiamo 'gradle' diretto)
       - name: Gradle dependencies
         script: |
-          echo "Sync and clean with Gradle 8.5"
+          echo "Clean & buildEnvironment with Gradle 8.5"
           gradle --no-daemon --stacktrace clean
           gradle --no-daemon --stacktrace buildEnvironment
 
-      # STEP 3: Build APK debug
+      # 3) Build APK debug
       - name: Build debug APK
         script: |
           echo "Assemble debug APK"
@@ -40,12 +40,3 @@ workflows:
 
     artifacts:
       - app/build/outputs/**/*.apk
-      - app/build/outputs/**/mapping.txt
-
-    publishing:
-      email:
-        recipients:
-          - your@email.here
-        notify:
-          success: true
-          failure: true
