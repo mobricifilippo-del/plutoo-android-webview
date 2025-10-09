@@ -4,35 +4,29 @@ plugins {
 }
 
 android {
-    namespace 'com.plutoo.app'
+    namespace "com.plutoo.app"
     compileSdk 34
 
     defaultConfig {
         applicationId "com.plutoo.app"
-        minSdk 24
+        minSdk 23
         targetSdk 34
         versionCode 1
         versionName "1.0"
 
-        // Placeholder per AdMob App ID (richiamato nel Manifest)
+        // 👉 Placeholders per il Manifest: usa TEST App ID (ok in sviluppo)
         manifestPlaceholders = [
-            admobAppId: "@string/admob_app_id"
+                admobAppId: "ca-app-pub-3940256099942544~6300978111"
         ]
-
-        vectorDrawables {
-            useSupportLibrary true
-        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
-            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
-            // Configurazione debug standard (niente minify)
-            minifyEnabled false
+            debuggable true
         }
     }
 
@@ -40,26 +34,34 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-
     kotlinOptions {
         jvmTarget = '17'
     }
 
-    buildFeatures {
-        viewBinding true
+    packagingOptions {
+        resources {
+            excludes += ['/META-INF/{AL2.0,LGPL2.1}']
+        }
     }
 }
 
+repositories {
+    google()
+    mavenCentral()
+}
+
 dependencies {
-    // Librerie Android di base
-    implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.activity:activity-ktx:1.8.2'
-    implementation 'com.google.android.material:material:1.11.0'
+    // Android base
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.activity:activity:1.9.0'
+    implementation 'androidx.webkit:webkit:1.9.0'
 
-    // WebView
-    implementation 'androidx.webkit:webkit:1.8.0'
+    // AdMob (Google Mobile Ads) – test ids ok in sviluppo
+    implementation 'com.google.android.gms:play-services-ads:23.2.0'
 
-    // Google Mobile Ads (AdMob)
-    implementation 'com.google.android.gms:play-services-ads:23.1.0'
+    // (Step successivi) Billing e UMP – tenerle già pronte non rompe il build
+    implementation 'com.android.billingclient:billing-ktx:6.2.1'
+    implementation 'com.google.android.ump:user-messaging-platform:2.2.0'
 }
