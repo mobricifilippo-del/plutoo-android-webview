@@ -10,8 +10,10 @@ workflows:
         - ~/.gradle/caches
         - ~/.gradle/wrapper
     scripts:
-      - name: Ensure Gradle wrapper
+      - name: Build debug APK
         script: |
+          set -euxo pipefail
+          # Se il wrapper non esiste, crealo
           if [ ! -f "./gradlew" ]; then
             curl -s "https://get.sdkman.io" | bash
             source "$HOME/.sdkman/bin/sdkman-init.sh"
@@ -19,9 +21,11 @@ workflows:
             gradle wrapper --gradle-version 8.7
           fi
           chmod +x gradlew
+
+          # Info di diagnostica
           ./gradlew --version
-      - name: Build debug APK
-        script: |
-          ./gradlew clean assembleDebug --stacktrace
+
+          # Compila l'app (modulo :app)
+          ./gradlew clean :app:assembleDebug --stacktrace --no-daemon
     artifacts:
       - app/build/outputs/apk/debug/*.apk
