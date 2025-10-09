@@ -5,8 +5,6 @@ workflows:
     environment:
       vars:
         PACKAGE_NAME: "com.plutoo.app"
-      android_signing:
-        - keystore_reference    # opzionale; se non ce l’hai, puoi rimuovere questa riga
       java: 17
     cache:
       cache_paths:
