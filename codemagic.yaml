@@ -9,7 +9,6 @@ workflows:
     cache:
       cache_paths:
         - ~/.gradle/caches
-        - ~/.gradle/wrapper
     triggering:
       events:
         - push
@@ -17,29 +16,27 @@ workflows:
         - pattern: "main"
           include: true
           source: true
-    scripts:
-      # STEP 1: Install Gradle and create wrapper locally
-      - name: Prepare Gradle
-        script: |
-          echo "Installing Gradle 8.7"
-          sdk install gradle 8.7 || true
-          echo "Creating Gradle wrapper"
-          gradle wrapper --gradle-version 8.7
-          chmod +x ./gradlew
-          echo "Gradle wrapper created successfully!"
 
-      # STEP 2: Sync dependencies and clean project
+    scripts:
+      # STEP 1: Installa Gradle "globale" e verifica
+      - name: Install Gradle 8.7
+        script: |
+          echo "Installing Gradle 8.7 via SDKMAN"
+          sdk install gradle 8.7 || sdk use gradle 8.7
+          gradle -v
+
+      # STEP 2: Sincronizza dipendenze e pulizia usando 'gradle' (NON il wrapper)
       - name: Gradle dependencies
         script: |
-          echo "Running dependency sync..."
-          ./gradlew clean --no-daemon
-          ./gradlew buildEnvironment --no-daemon
+          echo "Sync and clean with plain Gradle"
+          gradle --no-daemon --stacktrace clean
+          gradle --no-daemon --stacktrace buildEnvironment
 
-      # STEP 3: Build debug APK
+      # STEP 3: Build APK debug con 'gradle'
       - name: Build debug APK
         script: |
-          echo "Building debug APK..."
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          echo "Assemble debug with plain Gradle"
+          gradle --no-daemon --stacktrace assembleDebug
 
     artifacts:
       - app/build/outputs/**/*.apk
