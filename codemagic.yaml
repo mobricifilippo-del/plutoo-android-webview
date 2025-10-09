@@ -18,25 +18,28 @@ workflows:
           include: true
           source: true
     scripts:
-      # 1) Installa Gradle e prepara wrapper
-      - name: Ensure Gradle wrapper
+      # STEP 1: Install Gradle and create wrapper locally
+      - name: Prepare Gradle
         script: |
           echo "Installing Gradle 8.7"
           sdk install gradle 8.7 || true
-          echo "Generating gradle wrapper files"
+          echo "Creating Gradle wrapper"
           gradle wrapper --gradle-version 8.7
           chmod +x ./gradlew
+          echo "Gradle wrapper created successfully!"
 
-      # 2) Sincronizza dipendenze
+      # STEP 2: Sync dependencies and clean project
       - name: Gradle dependencies
         script: |
-          ./gradlew --no-daemon --stacktrace tasks > /dev/null 2>&1 || true
-          ./gradlew --no-daemon --stacktrace clean
+          echo "Running dependency sync..."
+          ./gradlew clean --no-daemon
+          ./gradlew buildEnvironment --no-daemon
 
-      # 3) Build APK debug
+      # STEP 3: Build debug APK
       - name: Build debug APK
         script: |
-          ./gradlew --no-daemon --stacktrace assembleDebug
+          echo "Building debug APK..."
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
     artifacts:
       - app/build/outputs/**/*.apk
