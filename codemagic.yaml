@@ -1,28 +1,53 @@
 workflows:
   android_debug:
-    name: Android Debug APK
+    name: Android Debug (WebView + AdMob)
     max_build_duration: 60
     environment:
       vars:
-        ANDROID_SDK_ROOT: /opt/android-sdk-linux
+        PACKAGE_NAME: "com.plutoo.app"
+      android_signing:
+        - keystore_reference    # opzionale; se non ce l’hai, puoi rimuovere questa riga
       java: 17
     cache:
       cache_paths:
         - ~/.gradle/caches
         - ~/.gradle/wrapper
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: "main"
+          include: true
+          source: true
     scripts:
+      # 1) Installa Gradle e prepara wrapper
       - name: Ensure Gradle wrapper
         script: |
-          if [ ! -f "./gradlew" ]; then
-            echo "Gradle wrapper not found. Installing..."
-            curl -s "https://get.sdkman.io" | bash
-            source "$HOME/.sdkman/bin/sdkman-init.sh"
-            sdk install gradle 8.7
-            gradle wrapper --gradle-version 8.7
-          fi
-          chmod +x gradlew
+          echo "Installing Gradle 8.7"
+          sdk install gradle 8.7 || true
+          echo "Generating gradle wrapper files"
+          gradle wrapper --gradle-version 8.7
+          chmod +x ./gradlew
+
+      # 2) Sincronizza dipendenze
+      - name: Gradle dependencies
+        script: |
+          ./gradlew --no-daemon --stacktrace tasks > /dev/null 2>&1 || true
+          ./gradlew --no-daemon --stacktrace clean
+
+      # 3) Build APK debug
       - name: Build debug APK
         script: |
-          ./gradlew clean assembleDebug --stacktrace
+          ./gradlew --no-daemon --stacktrace assembleDebug
+
     artifacts:
-      - app/build/outputs/apk/debug/*.apk
+      - app/build/outputs/**/*.apk
+      - app/build/outputs/**/mapping.txt
+
+    publishing:
+      email:
+        recipients:
+          - your@email.here
+        notify:
+          success: true
+          failure: true
