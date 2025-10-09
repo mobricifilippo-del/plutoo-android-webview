@@ -1,14 +1,12 @@
 workflows:
   android_debug:
-    name: Android Debug (FREE)
+    name: Android Debug (FREE, no cache)
     max_build_duration: 60
     environment:
       vars:
         PACKAGE_NAME: "com.plutoo.app"
       java: 17
-    cache:
-      cache_paths:
-        - ~/.gradle/caches
+    # ⚠️ Nessuna cache: evitiamo attese infinite su "Restoring cache"
     triggering:
       events:
         - push
@@ -18,25 +16,22 @@ workflows:
           source: true
 
     scripts:
-      # 1) Installa Gradle 8.5 (compatibile con AGP 8.2.2) e verifica
       - name: Install Gradle 8.5
         script: |
           echo "Installing Gradle 8.5 via SDKMAN"
           sdk install gradle 8.5 || sdk use gradle 8.5
           gradle -v
 
-      # 2) Sincronizza dipendenze (niente wrapper: usiamo 'gradle' diretto)
-      - name: Gradle dependencies
+      - name: Gradle dependencies (no cache)
         script: |
-          echo "Clean & buildEnvironment with Gradle 8.5"
-          gradle --no-daemon --stacktrace clean
-          gradle --no-daemon --stacktrace buildEnvironment
+          echo "Clean & buildEnvironment (no build cache)"
+          gradle --no-daemon --no-build-cache --stacktrace clean
+          gradle --no-daemon --no-build-cache --stacktrace buildEnvironment
 
-      # 3) Build APK debug
       - name: Build debug APK
         script: |
-          echo "Assemble debug APK"
-          gradle --no-daemon --stacktrace assembleDebug
+          echo "Assemble debug APK (no build cache)"
+          gradle --no-daemon --no-build-cache --stacktrace assembleDebug
 
     artifacts:
       - app/build/outputs/**/*.apk
