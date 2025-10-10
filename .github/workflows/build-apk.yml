@@ -10,34 +10,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Java 17 (Temurin)
+      - name: Set up JDK 17 (Temurin)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK components
-        run: |
-          sdkmanager --install "platform-tools" \
-                              "platforms;android-34" \
-                              "build-tools;34.0.0"
-          yes | sdkmanager --licenses
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses
 
-      # Usiamo il wrapper se presente, altrimenti l'action scarica Gradle
-      - name: Build Debug APK
-        uses: gradle/gradle-build-action@v3
+      # Installiamo Gradle 8.7 e NON usiamo il wrapper del repo
+      - name: Install Gradle 8.7 (no wrapper)
+        uses: gradle/actions/setup-gradle@v3
         with:
-          arguments: :app:assembleDebug
+          gradle-version: '8.7'
+
+      # Usiamo il comando 'gradle' (non ./gradlew)
+      - name: Build Debug APK
+        run: |
+          gradle --version
+          gradle --no-daemon clean :app:assembleDebug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
+          name: app-debug.apk
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
