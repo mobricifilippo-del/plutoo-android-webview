@@ -6,6 +6,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      KEYSTORE_PATH: ${{ github.workspace }}/keystore.jks
 
     steps:
       - name: Checkout repository
@@ -15,7 +23,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -26,24 +34,21 @@ jobs:
       - name: Install Gradle 8.7 (no wrapper)
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: 8.7
+          gradle-version: "8.7"
 
-      # Scrive la keystore su file e passa le variabili a Gradle
       - name: Prepare keystore for signing
+        if: env.KEYSTORE_B64 != ''
         run: |
-          echo "${ANDROID_KEYSTORE}" | base64 -d > "$RUNNER_TEMP/keystore.jks"
-          echo "KEYSTORE_PATH=$RUNNER_TEMP/keystore.jks" >> $GITHUB_ENV
-          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
-          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
-          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
-        env:
-          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
+          echo "$KEYSTORE_B64" | base64 -d > "$KEYSTORE_PATH"
+          ls -l "$KEYSTORE_PATH"
 
       - name: Build bundleRelease (signed by Gradle)
-        run: ./gradlew clean bundleRelease --stacktrace
+        run: >
+          gradle clean :app:bundleRelease --stacktrace
+          -Pandroid.injected.signing.store.file="$KEYSTORE_PATH"
+          -Pandroid.injected.signing.store.password="${KEYSTORE_PASSWORD}"
+          -Pandroid.injected.signing.key.alias="${KEY_ALIAS}"
+          -Pandroid.injected.signing.key.password="${KEY_PASSWORD}"
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
