@@ -3,16 +3,15 @@ plugins {
 }
 
 android {
-    namespace 'com.plutoo.webview'
     compileSdk 34
+    namespace 'com.plutoo.androidwebview'
 
     defaultConfig {
-        applicationId "com.plutoo.webview"
+        applicationId "com.plutoo.androidwebview"
         minSdk 24
         targetSdk 34
         versionCode 1
         versionName "1.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -22,17 +21,13 @@ android {
         }
     }
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+    buildFeatures {
+        viewBinding true
     }
 }
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'com.google.android.material:material:1.12.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
-    implementation 'androidx.webkit:webkit:1.10.0'
-    // AdMob / Google Mobile Ads
-    implementation 'com.google.android.gms:play-services-ads:23.3.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.webkit:webkit:1.9.0'
 }
