@@ -11,7 +11,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 17 (Temurin)
         uses: actions/setup-java@v3
         with:
           java-version: '17'
@@ -20,10 +20,13 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
+      # Usa Gradle senza wrapper (come nell'APK build che ti riesce)
+      - name: Install Gradle 8.7 (no wrapper)
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.7
 
-      - name: Build signed AAB
+      - name: Build signed AAB with Gradle
         env:
           KEYSTORE_PATH: keystore.jks
           ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
@@ -31,12 +34,15 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          echo "$ANDROID_KEYSTORE" | base64 -d > $KEYSTORE_PATH
-          ./gradlew clean bundleRelease \
-            -Pandroid.injected.signing.store.file=$KEYSTORE_PATH \
-            -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
-            -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
-            -Pandroid.injected.signing.key.password=$KEY_PASSWORD
+          # ricrea il keystore dal secret (può essere JKS o PKCS12, Gradle gestisce entrambi)
+          echo "$ANDROID_KEYSTORE" | base64 -d > "$KEYSTORE_PATH"
+
+          # build + firma via proprietà iniettate (niente jarsigner)
+          gradle clean bundleRelease \
+            -Pandroid.injected.signing.store.file="$KEYSTORE_PATH" \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
