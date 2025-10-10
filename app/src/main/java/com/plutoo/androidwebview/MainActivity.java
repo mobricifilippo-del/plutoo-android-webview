@@ -1,25 +1,26 @@
-package com.plutoo.webview;
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.plutoo.webview">
 
-import android.os.Bundle;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
+    <!-- Permessi di rete -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-import androidx.appcompat.app.AppCompatActivity;
+    <application
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config">
 
-public class MainActivity extends AppCompatActivity {
+        <!-- Activity di lancio -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        WebView webView = new WebView(this);
-        setContentView(webView);
-
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setDomStorageEnabled(true);
-        webView.setWebViewClient(new WebViewClient());
-
-        // TODO: cambia con l’URL reale della tua web app
-        webView.loadUrl("https://example.com/");
-    }
-}
+    </application>
+</manifest>
