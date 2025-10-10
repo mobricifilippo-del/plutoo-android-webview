@@ -39,6 +39,9 @@ jobs:
         env:
           ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
 
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
       - name: Build bundleRelease (signed by Gradle)
         run: ./gradlew clean bundleRelease --stacktrace
 
