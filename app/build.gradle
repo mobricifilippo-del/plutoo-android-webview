@@ -12,10 +12,21 @@ android {
         targetSdk 34
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // 1) DEFINISCI PRIMA LA FIRMA
+    signingConfigs {
+        release {
+            // KEYSTORE_PATH lo imposta il workflow (es. $RUNNER_TEMP/keystore.jks)
+            storeFile file(System.getenv("KEYSTORE_PATH") ?: "keystore.jks")
+            storePassword System.getenv("KEYSTORE_PASSWORD")
+            keyAlias System.getenv("KEY_ALIAS")
+            keyPassword System.getenv("KEY_PASSWORD")
+        }
+    }
+
+    // 2) POI I TIPI DI BUILD, CHE USANO LA FIRMA
     buildTypes {
         release {
             minifyEnabled false
@@ -25,15 +36,6 @@ android {
         }
         debug {
             debuggable true
-        }
-    }
-
-    signingConfigs {
-        release {
-            storeFile file(System.getenv("KEYSTORE_PATH") ?: "keystore.jks")
-            storePassword System.getenv("KEYSTORE_PASSWORD")
-            keyAlias System.getenv("KEY_ALIAS")
-            keyPassword System.getenv("KEY_PASSWORD")
         }
     }
 
@@ -47,9 +49,4 @@ dependencies {
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
     implementation 'androidx.webkit:webkit:1.8.0'
-}
-
-tasks.register('bundleRelease', Exec) {
-    dependsOn 'assembleRelease'
-    commandLine 'sh', '-c', 'mkdir -p app/build/outputs/bundle/release && cp app/build/outputs/apk/release/app-release.apk app/build/outputs/bundle/release/app-release.aab'
 }
