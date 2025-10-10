@@ -1,12 +1,10 @@
-// Root build.gradle (top-level)
-// Usa il plugin DSL senza specificare versioni qui (le versioni sono dichiarate in settings.gradle)
+// Root build.gradle (top-level) — configurazione moderna con Plugin DSL
+// Non dichiarare repositories qui: sono in settings.gradle
 
 plugins {
-    id 'com.android.application' apply false
-    id 'org.jetbrains.kotlin.android' apply false
+    id("com.android.application") version "8.5.2" apply false
 }
 
-// Task clean standard
-tasks.register("clean", Delete) {
-    delete rootProject.buildDir
-}
+// Nessun altro blocco necessario.
+// I moduli (es. :app) useranno questo plugin tramite:
+// plugins { id("com.android.application") }
