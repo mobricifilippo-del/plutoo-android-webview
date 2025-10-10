@@ -1,4 +1,4 @@
-name: Android Build (native)
+name: Android CI (Debug APK)
 
 on:
   workflow_dispatch:
@@ -13,26 +13,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java 17 (Temurin)
+      - name: Set up Java 21 (Temurin)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Accept Android SDK licenses
-        run: yes | sdkmanager --licenses
+      - name: Install Android SDK components
+        run: |
+          sdkmanager --install "platform-tools" \
+                              "platforms;android-34" \
+                              "build-tools;34.0.0"
+          yes | sdkmanager --licenses
 
+      # Usa Gradle senza fare affidamento sul wrapper locale
       - name: Build Debug APK with Gradle 8.7
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           gradle-version: '8.7'
-          arguments: clean assembleDebug
+          arguments: :app:assembleDebug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug.apk
-          path: "**/build/outputs/apk/debug/*.apk"
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
