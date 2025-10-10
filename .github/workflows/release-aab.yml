@@ -12,40 +12,38 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up JDK 17 (Temurin)
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: '17'
-          distribution: 'temurin'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      # Usa Gradle senza wrapper (come nell'APK build che ti riesce)
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses
+
       - name: Install Gradle 8.7 (no wrapper)
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: 8.7
 
-      - name: Build signed AAB with Gradle
-        env:
-          KEYSTORE_PATH: keystore.jks
-          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      # Scrive la keystore su file e passa le variabili a Gradle
+      - name: Prepare keystore for signing
         run: |
-          # ricrea il keystore dal secret (può essere JKS o PKCS12, Gradle gestisce entrambi)
-          echo "$ANDROID_KEYSTORE" | base64 -d > "$KEYSTORE_PATH"
+          echo "${ANDROID_KEYSTORE}" | base64 -d > "$RUNNER_TEMP/keystore.jks"
+          echo "KEYSTORE_PATH=$RUNNER_TEMP/keystore.jks" >> $GITHUB_ENV
+          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
 
-          # build + firma via proprietà iniettate (niente jarsigner)
-          gradle clean bundleRelease \
-            -Pandroid.injected.signing.store.file="$KEYSTORE_PATH" \
-            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
-            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
-            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+      - name: Build bundleRelease (signed by Gradle)
+        run: ./gradlew clean bundleRelease --stacktrace
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
-          path: app/build/outputs/bundle/release/app-release.aab
+          name: app-release.aab
+          path: app/build/outputs/bundle/release/*.aab
