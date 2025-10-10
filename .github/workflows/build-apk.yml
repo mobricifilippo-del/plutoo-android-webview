@@ -13,11 +13,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java 21 (Temurin)
+      - name: Set up Java 17 (Temurin)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '17'
+          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -29,11 +30,10 @@ jobs:
                               "build-tools;34.0.0"
           yes | sdkmanager --licenses
 
-      # Usa Gradle senza fare affidamento sul wrapper locale
-      - name: Build Debug APK with Gradle 8.7
+      # Usiamo il wrapper se presente, altrimenti l'action scarica Gradle
+      - name: Build Debug APK
         uses: gradle/gradle-build-action@v3
         with:
-          gradle-version: '8.7'
           arguments: :app:assembleDebug
 
       - name: Upload APK artifact
