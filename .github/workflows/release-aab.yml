@@ -1,4 +1,4 @@
-name: Android Release (AAB) — GitHub Actions
+name: Android Release (AAB)
 
 on:
   workflow_dispatch:
@@ -20,50 +20,35 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK components
-        run: |
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-          yes | sdkmanager --licenses
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses
 
-      # Decodifica keystore dai Secrets (Base64 → file .keystore)
-      - name: Decode release keystore
-        run: |
-          echo "$ANDROID_KEYSTORE" | base64 -d > release.keystore
-        env:
-          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
-
-      # Build del Bundle in modalità release
-      - name: Build bundleRelease (AAB)
+      # Usiamo Gradle SENZA wrapper (così non serve gradle-wrapper.jar)
+      - name: Build bundleRelease with Gradle 8.7
         uses: gradle/gradle-build-action@v3
         with:
-          arguments: |
-            clean
-            bundleRelease
+          gradle-version: '8.7'
+          arguments: clean :app:bundleRelease
 
-      # Firma l'AAB con il keystore esistente
+      # Firma dell'AAB usando i secrets già configurati
       - name: Sign AAB with jarsigner
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}   # base64 della keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
+          echo "$ANDROID_KEYSTORE" | base64 -d > keystore.jks
           jarsigner -verbose \
-            -keystore release.keystore \
+            -sigalg SHA256withRSA -digestalg SHA-256 \
+            -keystore keystore.jks \
             -storepass "$KEYSTORE_PASSWORD" \
             -keypass "$KEY_PASSWORD" \
             app/build/outputs/bundle/release/app-release.aab \
             "$KEY_ALIAS"
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      # Carica gli artifact firmati
       - name: Upload signed AAB
         uses: actions/upload-artifact@v4
         with:
-          name: app-release.aab
+          name: app-release-signed.aab
           path: app/build/outputs/bundle/release/app-release.aab
-          if-no-files-found: error
-
-      - name: Upload keystore (optional backup)
-        uses: actions/upload-artifact@v4
-        with:
-          name: release.keystore
-          path: release.keystore
