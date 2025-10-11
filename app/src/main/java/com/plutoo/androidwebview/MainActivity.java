@@ -17,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
 
-    // ✅ Torniamo al tuo dominio Vercel
+    // Punta al tuo sito
     private static final String START_URL = "https://plutoo-official.vercel.app";
 
     @Override
@@ -34,15 +34,15 @@ public class MainActivity extends AppCompatActivity {
         s.setAllowFileAccess(true);
         s.setAllowContentAccess(true);
         s.setJavaScriptCanOpenWindowsAutomatically(true);
+        s.setSupportMultipleWindows(false);
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setLoadWithOverviewMode(true);
         s.setUseWideViewPort(true);
 
-        // User-Agent mobile Chrome
-        String chromeMobileUA =
-                "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) " +
-                "Chrome/126.0.0.0 Mobile Safari/537.36";
-        s.setUserAgentString(chromeMobileUA);
+        // User-Agent mobile “pulito”
+        String ua = "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 "
+                + "(KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
+        s.setUserAgentString(ua);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
@@ -50,7 +50,6 @@ public class MainActivity extends AppCompatActivity {
         }
         CookieManager.getInstance().setAcceptCookie(true);
 
-        // tap/focus
         webView.setFocusable(true);
         webView.setFocusableInTouchMode(true);
         webView.setOnTouchListener((v, e) -> { if (!v.hasFocus()) v.requestFocus(); return false; });
@@ -59,10 +58,10 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) { return false; }
-            @Override public void onReceivedSslError(WebView v, SslErrorHandler h, SslError e) { h.proceed(); } // DEBUG
+            @Override public void onReceivedSslError(WebView v, SslErrorHandler h, SslError e) { h.proceed(); } // solo debug
             @Override public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                injectUnblockScript();
+                injectUnblocker(); // <— kill overlay e riattiva i tocchi
             }
         });
 
@@ -70,23 +69,36 @@ public class MainActivity extends AppCompatActivity {
         else webView.loadUrl(START_URL);
     }
 
-    /** Rimuove overlay/modali e riabilita i tocchi **/
-    private void injectUnblockScript() {
+    /** NASCONDE qualsiasi overlay/modale e forza i tocchi/scroll.  */
+    private void injectUnblocker() {
         String js =
             "(function(){try{"
-          + "var sel=['[class*=\"modal\"]','[id*=\"modal\"]','[class*=\"dialog\"]','[class*=\"overlay\"]','[class*=\"backdrop\"]'].join(',');"
-          + "document.querySelectorAll(sel).forEach(function(el){"
-          + "  var z = parseInt(getComputedStyle(el).zIndex||'0');"
-          + "  if (z>100) el.style.display='none';"
-          + "});"
-          + "// clicca eventuali pulsanti 'Chiudi'"
-          + "document.querySelectorAll('button,[role=button]').forEach(function(b){"
-          + "  if(/chiudi/i.test(b.textContent||'')) { try{ b.click(); }catch(e){} }"
-          + "});"
-          + "// forza pointer events e scroll"
-          + "var css='*{pointer-events:auto !important;}' + "
-          + "'html,body{overflow:auto !important;overscroll-behavior:auto !important;}';"
-          + "var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);"
+          + " if(window.__plutooKiller){clearInterval(window.__plutooKiller);} "
+          + " function kill(){try{"
+          + "   var sel=['[class*=\"modal\"]','[id*=\"modal\"]','[class*=\"dialog\"]',"
+          + "            '[class*=\"overlay\"]','[class*=\"backdrop\"]','[role=\"dialog\"]'].join(',');"
+          + "   document.querySelectorAll(sel).forEach(function(el){"
+          + "     var z=parseInt(getComputedStyle(el).zIndex||'0');"
+          + "     if(z>100 || /modal|dialog|overlay|backdrop/i.test(el.className+\" \"+(el.id||''))){"
+          + "       el.style.setProperty('display','none','important');"
+          + "       el.style.setProperty('visibility','hidden','important');"
+          + "     }"
+          + "   });"
+          + "   // Clicka eventuali pulsanti 'Chiudi/Close'"
+          + "   document.querySelectorAll('button,[role=button],a').forEach(function(b){"
+          + "     var t=(b.textContent||'').trim();"
+          + "     if(/chiudi|close|ok/i.test(t)){ try{ b.click(); }catch(e){} }"
+          + "   });"
+          + "   // Forza tocchi e scroll"
+          + "   var st=document.getElementById('plutoo-unblock');"
+          + "   if(!st){ st=document.createElement('style'); st.id='plutoo-unblock';"
+          + "     st.textContent='*{pointer-events:auto !important;}' + "
+          + "       'html,body{overflow:auto !important;touch-action:auto !important;}' + "
+          + "       '[class*=\"modal\"],[class*=\"overlay\"],[class*=\"backdrop\"],[role=\"dialog\"]{display:none !important;visibility:hidden !important;}';"
+          + "     document.head.appendChild(st);"
+          + "   }"
+          + " }catch(e){}}"
+          + " window.__plutooKiller=setInterval(kill,500); kill();"
           + "}catch(e){}})();";
         webView.evaluateJavascript(js, null);
     }
