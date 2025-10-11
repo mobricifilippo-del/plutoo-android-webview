@@ -1,111 +1,117 @@
 package com.plutoo.androidwebview;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
+import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.webkit.CookieManager;
-import android.webkit.GeolocationPermissions;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.view.KeyEvent;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int REQ_PERMS = 1001;
-
-    // URL iniziale della tua app web
-    private static final String START_URL = "https://plutoo-official.vercel.app/";
+    // 🔗 URL iniziale della tua web-app (modificalo se diverso)
+    private static final String START_URL = "https://plutoo.app";
 
     private WebView webView;
 
+    @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-        webView = findViewById(R.id.webview);
-        requestLocationIfNeeded();
-        setupWebView();
-        webView.loadUrl(START_URL);
-    }
+        webView = new WebView(this);
+        setContentView(webView);
 
-    private void requestLocationIfNeeded() {
-        // Chiedi i permessi solo se li hai nel Manifest
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this, new String[]{
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-            }, REQ_PERMS);
-        }
-    }
-
-    private void setupWebView() {
+        // ---- WebView settings sicuri e moderni ----
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
-        s.setGeolocationEnabled(true);
-        s.setAllowFileAccess(false);
-        s.setAllowContentAccess(false);
         s.setLoadWithOverviewMode(true);
         s.setUseWideViewPort(true);
-        s.setMediaPlaybackRequiresUserGesture(true);
-        // Per la review: blocca mixed content (tutto https pulito)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        }
+        s.setAllowFileAccess(true);
+        s.setMediaPlaybackRequiresUserGesture(false);
+        // Se la tua web-app carica contenuti HTTP su pagina HTTPS, abilita il mixed content:
+        // if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+        //     s.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        // }
 
+        // Cookie per login/sessioni
         CookieManager.getInstance().setAcceptCookie(true);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
         }
 
+        // Apertura link dentro WebView (eccetto schemi speciali)
         webView.setWebViewClient(new WebViewClient() {
             @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                Uri u = request.getUrl();
-                // Teniamo tutto in-app (https). Se vuoi aprire fuori certi link, gestiscili qui.
+            public boolean shouldOverrideUrlLoading(@NonNull WebView view, @NonNull WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                String scheme = uri.getScheme() != null ? uri.getScheme() : "";
+
+                // Schemi che vogliamo delegare ad altre app (telefono, email, mappe, ecc.)
+                if (scheme.equals("tel") || scheme.equals("mailto") || scheme.equals("geo")
+                        || scheme.equals("sms") || scheme.equals("intent")) {
+                    try {
+                        Intent i = new Intent(Intent.ACTION_VIEW, uri);
+                        startActivity(i);
+                    } catch (ActivityNotFoundException ignored) {}
+                    return true;
+                }
+
+                // Tutto il resto rimane nella WebView
                 return false;
             }
         });
 
-        webView.setWebChromeClient(new WebChromeClient() {
-            // Geolocalizzazione per “vicino a me”: consenti, i runtime permessi proteggono già
-            @Override
-            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
-                callback.invoke(origin, true, false);
+        // Per titolo/progress (opzionale)
+        webView.setWebChromeClient(new WebChromeClient());
+
+        // Gestione back: torna indietro nella cronologia WebView
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override public void handleOnBackPressed() {
+                if (webView != null && webView.canGoBack()) {
+                    webView.goBack();
+                } else {
+                    setEnabled(false);
+                    onBackPressed();
+                }
             }
         });
-    }
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
-            webView.goBack();
-            return true;
+        // Carica la home
+        if (savedInstanceState == null) {
+            webView.loadUrl(START_URL);
         }
-        return super.onKeyDown(keyCode, event);
     }
 
-    // opzionale: puoi reagire se l'utente nega la posizione
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        // Se negata, la parte “vicino a me” della web-app non funzionerà: gestiscilo lato web con un messaggio gentile.
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (webView != null) webView.saveState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (webView != null) webView.restoreState(savedInstanceState);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (webView != null) {
+            webView.destroy();
+            webView = null;
+        }
+        super.onDestroy();
     }
 }
