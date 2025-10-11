@@ -3,10 +3,7 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#4CAF50"
-        android:pathData="M54,0a54,54 0,1,1 -54,54a54,54 0,0,1 54,-54z"/>
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M27,54l27,-27l27,27l-27,27z"/>
+    <bitmap
+        android:gravity="center"
+        android:src="@drawable-nodpi/plutoo_logo" />
 </vector>
