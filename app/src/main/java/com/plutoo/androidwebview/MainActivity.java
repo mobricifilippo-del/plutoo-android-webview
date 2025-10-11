@@ -1,39 +1,59 @@
 package com.plutoo.androidwebview;
 
-import android.annotation.SuppressLint;
+import android.os.Build;
 import android.os.Bundle;
+import android.webkit.CookieManager;
+import android.webkit.SslErrorHandler;
+import android.webkit.SslError;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
-    // URL della tua webapp
     private static final String START_URL = "https://plutoo-official.vercel.app";
 
-    @SuppressLint("SetJavaScriptEnabled")
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         webView = findViewById(R.id.webview);
 
-        WebSettings settings = webView.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);
-        settings.setDatabaseEnabled(true);
-        settings.setLoadWithOverviewMode(true);
-        settings.setUseWideViewPort(true);
-        settings.setAllowFileAccess(true);
-        settings.setAllowContentAccess(true);
+        WebSettings s = webView.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setDatabaseEnabled(true);
+        s.setAllowFileAccess(true);
+        s.setAllowContentAccess(true);
+        s.setJavaScriptCanOpenWindowsAutomatically(true);
+        s.setMediaPlaybackRequiresUserGesture(false);
 
-        // Mantiene la navigazione dentro l'app
-        webView.setWebViewClient(new WebViewClient());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+            CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
+        }
+        CookieManager.getInstance().setAcceptCookie(true);
+
+        webView.setWebChromeClient(new WebChromeClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                // Mantieni tutta la navigazione nella WebView
+                return false;
+            }
+
+            @Override
+            public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+                // SOLO PER DEBUG: accetta certificati anche se c'è un warning
+                handler.proceed();
+            }
+        });
 
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState);
@@ -45,14 +65,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        if (webView != null) {
-            webView.saveState(outState);
-        }
+        webView.saveState(outState);
     }
 
     @Override
     public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
+        if (webView.canGoBack()) {
             webView.goBack();
         } else {
             super.onBackPressed();
