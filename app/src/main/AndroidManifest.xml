@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.plutoo.androidwebview">
 
-    <!-- Permesso per navigare su Internet -->
+    <!-- Permessi minimi per WebView -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- (Opzionale) se il sito è solo HTTPS puoi lasciare false.
+         Metti true SOLO se devi caricare HTTP non-HTTPS -->
     <application
         android:allowBackup="true"
-        android:label="Plutoo"
+        android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
+        android:usesCleartextTraffic="false"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
-        <!-- LAUNCHER -->
         <activity
-            android:name=".MainActivity"
+            android:name=".androidwebview.MainActivity"
             android:exported="true"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode"
-            android:usesCleartextTraffic="false">
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
