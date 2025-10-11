@@ -9,11 +9,9 @@ jobs:
     timeout-minutes: 30
 
     env:
-      # userai tre secrets già presenti (scegli tu i valori):
       KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
       KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      KEYSTORE_PATH: ${{ runner.temp }}/plutoo-release.jks
 
     steps:
       - name: Checkout repository
@@ -36,10 +34,13 @@ jobs:
         with:
           gradle-version: 8.7
 
-      # 1) Genera una NUOVA keystore sul runner (sicura: l'app non è pubblicata)
+      # 1) Genera una NUOVA keystore sul runner (sicura)
       - name: Generate release keystore
         shell: bash
         run: |
+          KEYSTORE_PATH="$RUNNER_TEMP/plutoo-release.jks"
+          echo "Keystore path: $KEYSTORE_PATH"
+
           keytool -genkeypair -v \
             -keystore "$KEYSTORE_PATH" \
             -alias "$KEY_ALIAS" \
@@ -47,15 +48,16 @@ jobs:
             -storepass "$KEYSTORE_PASSWORD" \
             -keypass "$KEY_PASSWORD" \
             -dname "CN=Plutoo,O=Plutoo,C=IT"
-          # Esporta il certificato (per Play App Signing come upload key)
+
           keytool -export -rfc \
             -alias "$KEY_ALIAS" \
             -keystore "$KEYSTORE_PATH" \
             -storepass "$KEYSTORE_PASSWORD" \
             -file upload_cert.pem
-          ls -l "$KEYSTORE_PATH" upload_cert.pem
 
-      # 2) Build + firma AAB usando la keystore generata
+          echo "KEYSTORE_PATH=$KEYSTORE_PATH" >> $GITHUB_ENV
+
+      # 2) Build + firma AAB
       - name: Build bundleRelease (signed by Gradle)
         shell: bash
         run: |
@@ -65,20 +67,20 @@ jobs:
             -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
 
-      # 3) Carica gli artifact: AAB firmato + keystore + certificato
+      # 3) Carica artifact: AAB + keystore + certificato
       - name: Upload signed AAB
         uses: actions/upload-artifact@v4
         with:
           name: app-release.aab
           path: app/build/outputs/bundle/release/*.aab
 
-      - name: Upload keystore (save it safely)
+      - name: Upload keystore
         uses: actions/upload-artifact@v4
         with:
           name: plutoo-release.jks
           path: ${{ env.KEYSTORE_PATH }}
 
-      - name: Upload upload certificate (PEM)
+      - name: Upload upload certificate
         uses: actions/upload-artifact@v4
         with:
           name: upload_cert.pem
