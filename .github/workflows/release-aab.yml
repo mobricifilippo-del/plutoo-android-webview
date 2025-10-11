@@ -7,7 +7,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      KEYSTORE_PATH: ${{ github.workspace }}/keystore.jks
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
     steps:
+      - name: Set up job
+        run: echo "Start"
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -15,34 +25,52 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Gradle cache
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses
+
+      # Installa Gradle senza wrapper (useremo il comando 'gradle', NON './gradlew')
+      - name: Install Gradle 8.7 (no wrapper)
         uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.7
 
-      # --- CREA IL KEYSTORE DA SECRET (base64) ---
-      - name: Decode keystore
-        env:
-          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+      # Decodifica la keystore dai secrets (già presenti)
+      - name: Prepare keystore for signing
+        shell: bash
         run: |
-          echo "$ANDROID_KEYSTORE" | base64 -d > keystore.jks
-          ls -l keystore.jks
+          # Se usi il secret base64 del keystore intero, decommenta la riga sotto:
+          # echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 -d > "$KEYSTORE_PATH"
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
+          # Se usi direttamente il contenuto binario nel secret ANDROID_KEYSTORE (non base64),
+          # scrivilo così:
+          printf "%s" "${{ secrets.ANDROID_KEYSTORE }}" > "$KEYSTORE_PATH"
 
-      # --- BUILD + FIRMA con "android.injected.signing.*" (nessuna modifica a build.gradle) ---
+          ls -l "$KEYSTORE_PATH"
+
+      # (Opzionale) cache Gradle per velocizzare
+      - name: Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # FIX: usa 'gradle' (no-wrapper) e non './gradlew'
       - name: Build bundleRelease (signed by Gradle)
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS:         ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD:      ${{ secrets.KEY_PASSWORD }}
+        shell: bash
         run: |
-          ./gradlew clean :app:bundleRelease --stacktrace \
-            -Pandroid.injected.signing.store.file=$PWD/keystore.jks \
+          set -e
+          gradle --version
+          gradle clean :app:bundleRelease --stacktrace \
+            -Pandroid.injected.signing.store.file="$KEYSTORE_PATH" \
             -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
