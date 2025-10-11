@@ -1,4 +1,4 @@
-name: Android Release APK — build & sign (stable)
+name: Android Release APK — build & sign (stable, no-wrapper)
 
 on:
   workflow_dispatch:
@@ -17,7 +17,7 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      # FIX definitivo: installa SDK e Build Tools manualmente e con percorsi corretti
+      # SDK Android installato in modo affidabile
       - name: Install Android SDK and Build Tools
         run: |
           sudo apt-get update -y
@@ -34,11 +34,12 @@ jobs:
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
           echo "$HOME/android-sdk/build-tools/34.0.0" >> $GITHUB_PATH
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
-      - name: Assemble release (unsigned)
-        run: ./gradlew :app:assembleRelease --stacktrace
+      # 🔧 Build con Gradle senza wrapper (usa una distro Gradle scaricata dall'action)
+      - name: Build release with Gradle (no wrapper)
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 8.7
+          arguments: :app:assembleRelease --stacktrace
 
       - name: Recreate keystore from base64
         env:
