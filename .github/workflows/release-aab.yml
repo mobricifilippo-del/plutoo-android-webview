@@ -1,4 +1,4 @@
-name: Android Release (AAB)
+name: Android Release (AAB) — generate & sign on runner
 
 on:
   workflow_dispatch:
@@ -6,18 +6,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     env:
-      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-      KEYSTORE_PATH: ${{ github.workspace }}/keystore.jks
+      # userai tre secrets già presenti (scegli tu i valori):
       KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
       KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      KEYSTORE_PATH: ${{ runner.temp }}/plutoo-release.jks
 
     steps:
-      - name: Set up job
-        run: echo "Start"
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -25,7 +23,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: 17
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -33,50 +31,55 @@ jobs:
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses
 
-      # Installa Gradle senza wrapper (useremo il comando 'gradle', NON './gradlew')
       - name: Install Gradle 8.7 (no wrapper)
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: 8.7
 
-      # Decodifica la keystore dai secrets (già presenti)
-      - name: Prepare keystore for signing
+      # 1) Genera una NUOVA keystore sul runner (sicura: l'app non è pubblicata)
+      - name: Generate release keystore
         shell: bash
         run: |
-          # Se usi il secret base64 del keystore intero, decommenta la riga sotto:
-          # echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 -d > "$KEYSTORE_PATH"
+          keytool -genkeypair -v \
+            -keystore "$KEYSTORE_PATH" \
+            -alias "$KEY_ALIAS" \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -keypass "$KEY_PASSWORD" \
+            -dname "CN=Plutoo,O=Plutoo,C=IT"
+          # Esporta il certificato (per Play App Signing come upload key)
+          keytool -export -rfc \
+            -alias "$KEY_ALIAS" \
+            -keystore "$KEYSTORE_PATH" \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -file upload_cert.pem
+          ls -l "$KEYSTORE_PATH" upload_cert.pem
 
-          # Se usi direttamente il contenuto binario nel secret ANDROID_KEYSTORE (non base64),
-          # scrivilo così:
-          printf "%s" "${{ secrets.ANDROID_KEYSTORE }}" > "$KEYSTORE_PATH"
-
-          ls -l "$KEYSTORE_PATH"
-
-      # (Opzionale) cache Gradle per velocizzare
-      - name: Gradle cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      # FIX: usa 'gradle' (no-wrapper) e non './gradlew'
+      # 2) Build + firma AAB usando la keystore generata
       - name: Build bundleRelease (signed by Gradle)
         shell: bash
         run: |
-          set -e
-          gradle --version
           gradle clean :app:bundleRelease --stacktrace \
             -Pandroid.injected.signing.store.file="$KEYSTORE_PATH" \
             -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
 
-      - name: Upload AAB
+      # 3) Carica gli artifact: AAB firmato + keystore + certificato
+      - name: Upload signed AAB
         uses: actions/upload-artifact@v4
         with:
           name: app-release.aab
           path: app/build/outputs/bundle/release/*.aab
+
+      - name: Upload keystore (save it safely)
+        uses: actions/upload-artifact@v4
+        with:
+          name: plutoo-release.jks
+          path: ${{ env.KEYSTORE_PATH }}
+
+      - name: Upload upload certificate (PEM)
+        uses: actions/upload-artifact@v4
+        with:
+          name: upload_cert.pem
+          path: upload_cert.pem
