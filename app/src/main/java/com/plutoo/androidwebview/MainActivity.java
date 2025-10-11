@@ -3,8 +3,8 @@ package com.plutoo.androidwebview;
 import android.os.Build;
 import android.os.Bundle;
 import android.webkit.CookieManager;
-import android.webkit.SslErrorHandler;
 import android.webkit.SslError;
+import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -44,13 +44,12 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                // Mantieni tutta la navigazione nella WebView
                 return false;
             }
 
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-                // SOLO PER DEBUG: accetta certificati anche se c'è un warning
+                // SOLO PER DEBUG: accetta certificati anche se c'è un warning SSL
                 handler.proceed();
             }
         });
