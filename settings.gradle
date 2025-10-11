@@ -1,21 +1,16 @@
-// settings.gradle — repository centralizzati e layout del progetto
-
 pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        google()
-        mavenCentral()
-    }
+  repositories {
+    google()
+    mavenCentral()
+    gradlePluginPortal()
+  }
 }
-
 dependencyResolutionManagement {
-    // Impedisci ai moduli (es. :app) di dichiarare repositories propri
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-    }
+  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+  repositories {
+    google()
+    mavenCentral()
+  }
 }
-
 rootProject.name = "plutoo-android-webview"
 include(":app")
