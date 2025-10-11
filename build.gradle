@@ -1,4 +1,11 @@
-// file root minimale
+// build.gradle (root)
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
 tasks.register("clean", Delete) {
-  delete rootProject.buildDir
+    delete rootProject.buildDir
 }
