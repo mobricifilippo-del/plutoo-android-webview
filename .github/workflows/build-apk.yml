@@ -1,4 +1,4 @@
-name: Android Debug APK — build & artifact
+name: Android Debug APK — direct Gradle build
 
 on:
   workflow_dispatch:
@@ -16,31 +16,19 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
 
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
 
-      # ✅ Ripristina il gradle-wrapper.jar mancante (versione 8.7 come nel tuo gradle-wrapper.properties)
-      - name: Restore Gradle wrapper JAR (8.7)
-        run: |
-          mkdir -p gradle/wrapper
-          curl -sL -o gradle/wrapper/gradle-wrapper.jar \
-            https://repo.gradle.org/gradle/libs-releases-local/org/gradle/gradle-wrapper/8.7/gradle-wrapper-8.7.jar
-          test -f gradle/wrapper/gradle-wrapper.jar
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses
 
-      - name: Build debug APK (no signing)
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Build Debug APK using system Gradle
+        run: |
+          gradle assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug.apk
           path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
