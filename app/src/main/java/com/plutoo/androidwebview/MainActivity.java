@@ -1,83 +1,61 @@
-package com.plutoo.androidwebview
+package com.plutoo.androidwebview;
 
-import android.graphics.Color
-import android.os.Build
-import android.os.Bundle
-import android.webkit.WebChromeClient
-import android.webkit.WebResourceRequest
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.AppCompatActivity
+import android.annotation.SuppressLint;
+import android.os.Bundle;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
-class MainActivity : AppCompatActivity() {
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 
-    private lateinit var webView: WebView
+public class MainActivity extends AppCompatActivity {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+    private WebView webView;
+    // URL della tua webapp
+    private static final String START_URL = "https://plutoo-official.vercel.app";
 
-        webView = findViewById(R.id.webview)
+    @SuppressLint("SetJavaScriptEnabled")
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-        val s = webView.settings
-        s.javaScriptEnabled = true
-        s.domStorageEnabled = true
-        s.databaseEnabled = true
-        s.setSupportMultipleWindows(true)
-        s.javaScriptCanOpenWindowsAutomatically = true
-        s.useWideViewPort = true
-        s.loadWithOverviewMode = true
-        s.mediaPlaybackRequiresUserGesture = false
-        s.setSupportZoom(false)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            // consente eventuale contenuto misto (CDN, ecc.)
-            s.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
-        }
+        webView = findViewById(R.id.webview);
 
-        webView.setBackgroundColor(Color.TRANSPARENT)
-        webView.isClickable = true
-        // evita il menu lungo-tap che può “bloccare” i tocchi
-        webView.setOnLongClickListener { true }
-        webView.isLongClickable = false
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
 
-        webView.webChromeClient = WebChromeClient()
-        webView.webViewClient = object : WebViewClient() {
-            override fun shouldOverrideUrlLoading(
-                view: WebView,
-                request: WebResourceRequest
-            ): Boolean {
-                // lascia che la WebView gestisca i link
-                return false
-            }
-
-            override fun onPageFinished(view: WebView?, url: String?) {
-                // qui potresti nascondere eventuali splash/overlay se servisse
-            }
-        }
+        // Mantiene la navigazione dentro l'app
+        webView.setWebViewClient(new WebViewClient());
 
         if (savedInstanceState != null) {
-            webView.restoreState(savedInstanceState)
+            webView.restoreState(savedInstanceState);
         } else {
-            webView.loadUrl(getString(R.string.app_url))
+            webView.loadUrl(START_URL);
         }
-
-        // tasto back dentro la WebView
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (this@MainActivity::webView.isInitialized && webView.canGoBack()) {
-                    webView.goBack()
-                } else {
-                    isEnabled = false
-                    onBackPressedDispatcher.onBackPressed()
-                }
-            }
-        })
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        if (this::webView.isInitialized) webView.saveState(outState)
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (webView != null) {
+            webView.saveState(outState);
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (webView != null && webView.canGoBack()) {
+            webView.goBack();
+        } else {
+            super.onBackPressed();
+        }
     }
 }
