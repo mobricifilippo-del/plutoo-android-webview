@@ -1,4 +1,4 @@
-name: Android CI (Debug APK)
+name: Android Debug APK — build & artifact
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 17 (Temurin)
@@ -18,6 +18,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -25,21 +26,14 @@ jobs:
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses
 
-      # Installiamo Gradle 8.7 e NON usiamo il wrapper del repo
-      - name: Install Gradle 8.7 (no wrapper)
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: '8.7'
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
 
-      # Usiamo il comando 'gradle' (non ./gradlew)
-      - name: Build Debug APK
-        run: |
-          gradle --version
-          gradle --no-daemon clean :app:assembleDebug
+      - name: Build debug APK (no signing)
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug.apk
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
+          path: app/build/outputs/apk/debug/app-debug.apk
