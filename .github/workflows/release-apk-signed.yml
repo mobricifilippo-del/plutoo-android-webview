@@ -1,0 +1,64 @@
+name: Android Release APK — build & sign (GitHub Actions only)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            build-tools;34.0.0
+            platforms;android-34
+            platform-tools
+
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      # Decodifica keystore dal secret
+      - name: Decode release keystore
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > release.jks
+          echo "STORE_FILE=$PWD/release.jks" >> $GITHUB_ENV
+
+      # Build RELEASE firmato (installabile)
+      - name: Assemble release (signed)
+        run: |
+          ./gradlew clean :app:assembleRelease --stacktrace \
+            -Pandroid.injected.signing.store.file="${{ env.STORE_FILE }}" \
+            -Pandroid.injected.signing.store.password="${{ env.KEYSTORE_PASSWORD }}" \
+            -Pandroid.injected.signing.key.alias="${{ env.KEY_ALIAS }}" \
+            -Pandroid.injected.signing.key.password="${{ env.KEY_PASSWORD }}"
+          ls -la app/build/outputs/apk/release || true
+
+      # Carica l'APK firmato come artifact
+      - name: Upload signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-signed.apk
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
