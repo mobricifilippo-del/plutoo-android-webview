@@ -1,4 +1,4 @@
-name: Android Release APK — build & sign (stable, no-wrapper)
+name: Android Release APK from AAB — build, sign & export
 
 on:
   workflow_dispatch:
@@ -17,8 +17,8 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      # SDK Android installato in modo affidabile
-      - name: Install Android SDK and Build Tools
+      # SDK & Build-Tools per apksigner/zipalign
+      - name: Install Android SDK + Build Tools
         run: |
           sudo apt-get update -y
           sudo apt-get install -y wget unzip
@@ -30,16 +30,15 @@ jobs:
           mv cmdline-tools/* cmdline-tools/latest/ || true
           yes | cmdline-tools/latest/bin/sdkmanager --licenses
           yes | cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34"
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
           echo "$HOME/android-sdk/build-tools/34.0.0" >> $GITHUB_PATH
 
-      # 🔧 Build con Gradle senza wrapper (usa una distro Gradle scaricata dall'action)
-      - name: Build release with Gradle (no wrapper)
+      # Costruisce l'AAB (robusto, come l'altro workflow che già ti riusciva)
+      - name: Build release bundle (AAB) with Gradle
         uses: gradle/gradle-build-action@v3
         with:
           gradle-version: 8.7
-          arguments: :app:assembleRelease --stacktrace
+          arguments: :app:bundleRelease --stacktrace
 
       - name: Recreate keystore from base64
         env:
@@ -47,39 +46,38 @@ jobs:
         run: |
           echo "$KEYSTORE_BASE64" | base64 --decode > keystore.jks
 
-      - name: Find unsigned APK
-        id: findapk
-        shell: bash
+      - name: Locate AAB
+        id: findeab
         run: |
           set -e
-          APK_PATH=$(ls -1 app/build/outputs/apk/release/*-unsigned.apk 2>/dev/null || true)
-          if [ -z "$APK_PATH" ]; then
-            APK_PATH=$(ls -1 app/build/outputs/apk/release/*.apk | head -n1)
-          fi
-          echo "apk=$APK_PATH" >> $GITHUB_OUTPUT
-          echo "Found APK: $APK_PATH"
+          AAB=$(ls -1 app/build/outputs/bundle/release/*.aab | head -n1)
+          echo "aab=$AAB" >> $GITHUB_OUTPUT
+          echo "Found AAB: $AAB"
 
-      - name: Zipalign & Sign APK
+      # Con bundletool generiamo un APK universale già firmato
+      - name: Make universal APK from AAB (bundletool)
         env:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           set -e
-          ALIGNED=app-release-aligned.apk
-          zipalign -f 4 "${{ steps.findapk.outputs.apk }}" "$ALIGNED"
-          apksigner sign \
+          BUNDLETOOL_VER=1.17.2
+          curl -sL -o bundletool.jar https://github.com/google/bundletool/releases/download/$BUNDLETOOL_VER/bundletool-all-$BUNDLETOOL_VER.jar
+          java -jar bundletool.jar build-apks \
+            --bundle "${{ steps.findeab.outputs.aab }}" \
+            --output app-release.apks \
+            --mode=universal \
             --ks keystore.jks \
-            --ks-key-alias "$KEY_ALIAS" \
             --ks-pass pass:"$KEYSTORE_PASSWORD" \
-            --key-pass pass:"$KEY_PASSWORD" \
-            --out app-release-signed.apk \
-            "$ALIGNED"
-          apksigner verify app-release-signed.apk
-          echo "Signed APK ready."
+            --ks-key-alias "$KEY_ALIAS" \
+            --key-pass pass:"$KEY_PASSWORD"
+          unzip -p app-release.apks universal.apk > app-release-universal.apk
+          apksigner verify --print-certs app-release-universal.apk
+          echo "Universal signed APK ready."
 
-      - name: Upload signed APK
+      - name: Upload signed universal APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-signed
-          path: app-release-signed.apk
+          name: app-release-universal
+          path: app-release-universal.apk
