@@ -1,4 +1,4 @@
-name: Android Debug APK — direct Gradle build
+name: Android Debug APK — verbose
 
 on:
   workflow_dispatch:
@@ -17,18 +17,39 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      # SDK + cmdline-tools
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          ndk: false
 
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses
 
-      - name: Build Debug APK using system Gradle
+      # Assicura che il wrapper Gradle funzioni anche se gradle-wrapper.jar non è nel repo
+      - name: Restore Gradle wrapper JAR (8.7)
         run: |
-          gradle assembleDebug --no-daemon --stacktrace
+          mkdir -p gradle/wrapper
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            curl -sL https://repo1.maven.org/maven2/org/gradle/gradle-wrapper/8.7/gradle-wrapper-8.7.jar \
+              -o gradle/wrapper/gradle-wrapper.jar
+          fi
+          chmod +x ./gradlew
+
+      # Build con log molto dettagliato
+      - name: Build Debug APK (verbose)
+        run: |
+          ./gradlew --version
+          ./gradlew clean :app:assembleDebug \
+            --no-daemon --stacktrace --warning-mode all --console=plain
 
       - name: Upload APK artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug.apk
+          name: app-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
