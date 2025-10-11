@@ -1,52 +1,37 @@
 plugins {
-    id 'com.android.application'
+  id 'com.android.application' version '8.5.2'
 }
 
 android {
-    namespace 'com.plutoo.androidwebview'
-    compileSdk 34
+  namespace 'com.plutoo.androidwebview'
+  compileSdk 34
 
-    defaultConfig {
-        applicationId "com.plutoo.androidwebview"
-        minSdk 24
-        targetSdk 34
-        versionCode 1
-        versionName "1.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    }
+  defaultConfig {
+    applicationId "com.plutoo.androidwebview"
+    minSdk 24
+    targetSdk 34
+    versionCode 1
+    versionName "1.0"
+  }
 
-    // 1) DEFINISCI PRIMA LA FIRMA
-    signingConfigs {
-        release {
-            // KEYSTORE_PATH lo imposta il workflow (es. $RUNNER_TEMP/keystore.jks)
-            storeFile file(System.getenv("KEYSTORE_PATH") ?: "keystore.jks")
-            storePassword System.getenv("KEYSTORE_PASSWORD")
-            keyAlias System.getenv("KEY_ALIAS")
-            keyPassword System.getenv("KEY_PASSWORD")
-        }
+  buildTypes {
+    release {
+      minifyEnabled false
+      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
     }
+    debug {
+      debuggable true
+    }
+  }
 
-    // 2) POI I TIPI DI BUILD, CHE USANO LA FIRMA
-    buildTypes {
-        release {
-            minifyEnabled false
-            shrinkResources false
-            debuggable false
-            signingConfig signingConfigs.release
-        }
-        debug {
-            debuggable true
-        }
-    }
-
-    buildFeatures {
-        buildConfig true
-    }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'com.google.android.material:material:1.12.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
-    implementation 'androidx.webkit:webkit:1.8.0'
+  implementation 'androidx.appcompat:appcompat:1.7.0'
+  implementation 'com.google.android.material:material:1.12.0'
+  implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 }
