@@ -1,4 +1,4 @@
-name: Android Debug APK — verbose
+name: Android Debug APK — no wrapper
 
 on:
   workflow_dispatch:
@@ -15,39 +15,29 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: '17'
 
-      # SDK + cmdline-tools
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
         with:
           api-level: 34
           target: default
           arch: x86_64
-          ndk: false
 
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses
 
-      # Assicura che il wrapper Gradle funzioni anche se gradle-wrapper.jar non è nel repo
-      - name: Restore Gradle wrapper JAR (8.7)
-        run: |
-          mkdir -p gradle/wrapper
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            curl -sL https://repo1.maven.org/maven2/org/gradle/gradle-wrapper/8.7/gradle-wrapper-8.7.jar \
-              -o gradle/wrapper/gradle-wrapper.jar
-          fi
-          chmod +x ./gradlew
-
-      # Build con log molto dettagliato
-      - name: Build Debug APK (verbose)
-        run: |
-          ./gradlew --version
-          ./gradlew clean :app:assembleDebug \
+      # 🔑 Usa un Gradle “esterno” (niente wrapper). Compila :app:assembleDebug
+      - name: Build Debug APK (Gradle 8.7, no wrapper)
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: '8.7'
+          # se il wrapper non c'è, userà questo Gradle
+          arguments: >
+            clean :app:assembleDebug
             --no-daemon --stacktrace --warning-mode all --console=plain
 
       - name: Upload APK artifact
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
