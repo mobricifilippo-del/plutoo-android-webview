@@ -4,6 +4,6 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     <bitmap
-        android:gravity="center"
-        android:src="@drawable-nodpi/plutoo_logo" />
+        android:src="@drawable-nodpi/plutoo-logo"
+        android:gravity="center" />
 </vector>
