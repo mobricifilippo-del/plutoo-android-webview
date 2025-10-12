@@ -1,5 +1,5 @@
 plugins {
-    id 'com.android.application'
+    id 'com.android.application' version '8.5.2'
 }
 
 android {
@@ -12,32 +12,53 @@ android {
         targetSdk 34
         versionCode 1
         versionName "1.0"
+
+        // Abilita vector drawables su vecchie versioni (se servono)
+        vectorDrawables.useSupportLibrary = true
     }
 
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                    'proguard-rules.pro'
         }
         debug {
+            // utile se vuoi loggare/inspezionare la webview
             minifyEnabled false
         }
-    }
-
-    buildFeatures {
-        viewBinding true
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    buildFeatures {
+        viewBinding true
+    }
+
+    packaging {
+        resources {
+            excludes += ['/META-INF/{AL2.0,LGPL2.1}']
+        }
+    }
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.13.1'
-    implementation 'androidx.appcompat:appcompat:1.6.1'          // ✅ stabile
+    // Material 3 (tema Theme.Material3.DayNight.NoActionBar)
     implementation 'com.google.android.material:material:1.12.0'
+
+    // AppCompat (richiesto da molte componenti UI)
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+
+    // Activity/Fragment compat moderni
     implementation 'androidx.activity:activity:1.9.2'
-    implementation 'androidx.webkit:webkit:1.11.0'
+    implementation 'androidx.fragment:fragment:1.8.3'
+
+    // WebView compat (feature & bugfix)
+    implementation 'androidx.webkit:webkit:1.10.0'
+
+    // Core KTX opzionale (anche se il progetto è Java, non dà fastidio)
+    implementation 'androidx.core:core-ktx:1.13.1'
 }
