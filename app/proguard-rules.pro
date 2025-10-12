@@ -1,3 +1,1 @@
-# Mantieni tutto leggibile durante la fase debug
--dontwarn **
--keep class * { *; }
+# Lascia vuoto per ora o aggiungi regole solo se abiliti minify
