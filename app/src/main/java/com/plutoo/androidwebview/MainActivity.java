@@ -1,19 +1,28 @@
-package com.plutoo.androidwebview;
+package com.plutoo.app;
 
 import android.annotation.SuppressLint;
-import android.graphics.Bitmap;
+import android.content.Intent;
+import android.net.Uri;
+import android.net.http.SslError;
+import android.os.Build;
 import android.os.Bundle;
+import android.webkit.CookieManager;
+import android.webkit.SslErrorHandler;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String HOME = "https://plutoo-official.vercel.app/#home";
+    private static final String BASE_URL = "https://plutoo-official.vercel.app/";
+    private static final String ALLOWED_HOST = "plutoo-official.vercel.app";
+
     private WebView webView;
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -24,59 +33,104 @@ public class MainActivity extends AppCompatActivity {
 
         webView = findViewById(R.id.webview);
 
-        // Impostazioni WebView sicure e funzionali
-        WebSettings ws = webView.getSettings();
-        ws.setJavaScriptEnabled(true);
-        ws.setDomStorageEnabled(true);
-        ws.setDatabaseEnabled(true);
-        ws.setLoadsImagesAutomatically(true);
-        ws.setUseWideViewPort(true);
-        ws.setLoadWithOverviewMode(true);
-        ws.setSupportZoom(false);
-        ws.setBuiltInZoomControls(false);
-        ws.setDisplayZoomControls(false);
-        // Evitiamo trucchi di cache-busting: apriamo la Home pulita
-        ws.setCacheMode(WebSettings.LOAD_DEFAULT);
+        // --- WebView settings
+        WebSettings s = webView.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setDatabaseEnabled(true);
+        s.setLoadWithOverviewMode(true);
+        s.setUseWideViewPort(true);
+        s.setSupportZoom(false);
+        s.setBuiltInZoomControls(false);
+        s.setDisplayZoomControls(false);
+        s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        s.setAllowFileAccess(true);
+        s.setJavaScriptCanOpenWindowsAutomatically(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            s.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        }
 
-        // Client che rimane dentro l'app
+        CookieManager cm = CookieManager.getInstance();
+        cm.setAcceptCookie(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            cm.setAcceptThirdPartyCookies(webView, true);
+        }
+
+        webView.setWebChromeClient(new WebChromeClient());
+
         webView.setWebViewClient(new WebViewClient() {
-            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                // Apri tutto dentro la WebView
-                return false;
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri u = request.getUrl();
+                if (ALLOWED_HOST.equalsIgnoreCase(u.getHost())) {
+                    // Rimani dentro la WebView
+                    return false;
+                }
+                // Apri tutto il resto nel browser
+                startActivity(new Intent(Intent.ACTION_VIEW, u));
+                return true;
             }
-            @Override public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                super.onPageStarted(view, url, favicon);
-            }
-            @Override public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
+
+            @Override
+            public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+                // Il dominio è HTTPS valido su Vercel, ma se arrivano warning proseguiamo per evitare blocchi tipo ERR_CACHE_MISS
+                if (error != null && error.getUrl() != null) {
+                    Uri u = Uri.parse(error.getUrl());
+                    if (ALLOWED_HOST.equalsIgnoreCase(u.getHost())) {
+                        handler.proceed();
+                        return;
+                    }
+                }
+                handler.cancel();
             }
         });
 
-        if (savedInstanceState == null) {
-            // Pulisci eventuale cache vecchia una sola volta alla prima apertura
-            try { webView.clearCache(true); } catch (Exception ignored) {}
-            webView.loadUrl(HOME);
-        }
-    }
+        // Back: torna nella cronologia web, esci solo se non si può tornare
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override public void handleOnBackPressed() {
+                if (webView.canGoBack()) webView.goBack();
+                else finish();
+            }
+        });
 
-    @Override
-    public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
+        if (savedInstanceState != null) {
+            // Ripristina stato (tab che avevi aperto, scroll, ecc.)
+            webView.restoreState(savedInstanceState);
         } else {
-            super.onBackPressed();
+            // Se entri da deep link (es. tap su link plutoo), apri quello;
+            // altrimenti carica la root dell'app (che porta alla Home → Entra → resto dell'app).
+            Uri deep = getIntent() != null ? getIntent().getData() : null;
+            if (deep != null && ALLOWED_HOST.equalsIgnoreCase(deep.getHost())) {
+                webView.loadUrl(deep.toString());
+            } else {
+                webView.loadUrl(BASE_URL);
+            }
         }
     }
 
     @Override
-    protected void onSaveInstanceState(@Nullable Bundle outState) {
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        Uri deep = intent.getData();
+        if (deep != null && ALLOWED_HOST.equalsIgnoreCase(deep.getHost())) {
+            webView.loadUrl(deep.toString());
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         if (webView != null) webView.saveState(outState);
     }
 
     @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        if (webView != null) webView.restoreState(savedInstanceState);
+    protected void onDestroy() {
+        if (webView != null) {
+            webView.destroy();
+            webView = null;
+        }
+        super.onDestroy();
     }
 }
