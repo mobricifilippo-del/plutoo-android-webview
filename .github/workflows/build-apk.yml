@@ -17,34 +17,40 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: '17'
           cache: gradle
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
-      # RIPRISTINA IL WRAPPER SE MANCANTE
-      - name: Ensure Gradle wrapper bootstrap
+      - name: Prepare Gradle wrapper (8.9)
+        shell: bash
         run: |
+          set -euo pipefail
+
+          # assicura permessi al gradlew (se presente)
+          [ -f ./gradlew ] && chmod +x ./gradlew
+
+          # crea cartella wrapper
           mkdir -p gradle/wrapper
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            curl -sL -o gradle/wrapper/gradle-wrapper.jar \
-              https://repo.gradle.org/gradle/libs-releases-local/org/gradle/gradle-wrapper/8.9/gradle-wrapper-8.9.jar
-          fi
-          if [ ! -f gradle/wrapper/gradle-wrapper.properties ]; then
+
+          # forza la distributionUrl a Gradle 8.9
+          if [ -f gradle/wrapper/gradle-wrapper.properties ]; then
+            sed -i 's#^distributionUrl=.*#distributionUrl=https://services.gradle.org/distributions/gradle-8.9-all.zip#' gradle/wrapper/gradle-wrapper.properties
+          else
             cat > gradle/wrapper/gradle-wrapper.properties <<'EOF'
 distributionBase=GRADLE_USER_HOME
 distributionPath=wrapper/dists
-distributionUrl=https\://services.gradle.org/distributions/gradle-8.9-all.zip
+distributionUrl=https://services.gradle.org/distributions/gradle-8.9-all.zip
 zipStoreBase=GRADLE_USER_HOME
 zipStorePath=wrapper/dists
 EOF
           fi
 
-      - name: Generate Gradle wrapper 8.9
-        run: ./gradlew wrapper --gradle-version 8.9
+          # scarica il JAR del wrapper se manca (altrimenti ClassNotFound)
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            curl -fsSL -o gradle/wrapper/gradle-wrapper.jar \
+              https://repo.gradle.org/gradle/libs-releases-local/org/gradle/gradle-wrapper/8.9/gradle-wrapper-8.9.jar
+          fi
 
-      - name: Assemble Debug
+      - name: Build debug APK
         run: ./gradlew :app:assembleDebug --stacktrace
 
       - name: Upload APK artifact
