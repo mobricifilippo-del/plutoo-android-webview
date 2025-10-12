@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Consenti HTTP in chiaro (utile se il sito non è HTTPS) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">plutoo-official.vercel.app</domain>
+    </domain-config>
+
+    <!-- Permette contenuti misti in compatibilità (immagini CDN esterne via http eventualmente) -->
     <base-config cleartextTrafficPermitted="true" />
 </network-security-config>
