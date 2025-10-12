@@ -1,48 +1,36 @@
-name: Android Debug APK
+name: build-apk
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up JDK 17 (Temurin)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: 17
+          cache: gradle
 
-      - name: Install Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          api-level: 34
-          target: default
-          arch: x86_64
+      - name: Generate Gradle wrapper 8.9
+        run: ./gradlew wrapper --gradle-version 8.9
 
-      - name: Accept Android SDK licenses
-        run: yes | sdkmanager --licenses
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
 
-      # Crea il wrapper con Gradle 8.7
-      - name: Generate Gradle wrapper 8.7
-        uses: gradle/gradle-build-action@v2
-        with:
-          gradle-version: '8.7'
-          arguments: wrapper
-
-      # Compila usando il wrapper appena creato
       - name: Assemble Debug
-        run: |
-          ./gradlew --version
-          ./gradlew clean :app:assembleDebug --no-daemon --stacktrace --warning-mode all
+        run: ./gradlew :app:assembleDebug --stacktrace
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
+          name: app-debug
           path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
