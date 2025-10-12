@@ -18,40 +18,13 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
 
-      - name: Prepare Gradle wrapper (8.9)
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          # assicura permessi al gradlew (se presente)
-          [ -f ./gradlew ] && chmod +x ./gradlew
-
-          # crea cartella wrapper
-          mkdir -p gradle/wrapper
-
-          # forza la distributionUrl a Gradle 8.9
-          if [ -f gradle/wrapper/gradle-wrapper.properties ]; then
-            sed -i 's#^distributionUrl=.*#distributionUrl=https://services.gradle.org/distributions/gradle-8.9-all.zip#' gradle/wrapper/gradle-wrapper.properties
-          else
-            cat > gradle/wrapper/gradle-wrapper.properties <<'EOF'
-distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-distributionUrl=https://services.gradle.org/distributions/gradle-8.9-all.zip
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists
-EOF
-          fi
-
-          # scarica il JAR del wrapper se manca (altrimenti ClassNotFound)
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            curl -fsSL -o gradle/wrapper/gradle-wrapper.jar \
-              https://repo.gradle.org/gradle/libs-releases-local/org/gradle/gradle-wrapper/8.9/gradle-wrapper-8.9.jar
-          fi
-
-      - name: Build debug APK
-        run: ./gradlew :app:assembleDebug --stacktrace
+      # Usa il Gradle Build Action: NON richiede gradle-wrapper.jar nel repo
+      - name: Build Debug APK with Gradle 8.9
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 8.9
+          arguments: :app:assembleDebug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
