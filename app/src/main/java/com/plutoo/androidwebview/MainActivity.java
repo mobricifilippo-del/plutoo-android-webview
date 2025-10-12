@@ -1,77 +1,71 @@
 package com.plutoo.androidwebview;
 
 import android.annotation.SuppressLint;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.plutoo.androidwebview.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String APP_URL = "https://plutoo-official.vercel.app/#home";
-    private WebView webView;
+    private ActivityMainBinding binding;
+
+    // Cambia SOLO questo se vuoi puntare ad un altro entry-point dell’app web
+    private static final String START_URL = "https://plutoo-official.vercel.app/#home";
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        webView = findViewById(R.id.webview);
+        WebView wv = binding.webview;
 
-        WebSettings s = webView.getSettings();
+        WebSettings s = wv.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
-        s.setBuiltInZoomControls(false);
-        s.setDisplayZoomControls(false);
-        s.setLoadWithOverviewMode(true);
-        s.setUseWideViewPort(true);
-        s.setCacheMode(WebSettings.LOAD_NO_CACHE); // evita ERR_CACHE_MISS
-        webView.clearCache(true);
-        webView.clearHistory();
+        s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        s.setUserAgentString(s.getUserAgentString() + " PlutooAndroid/1.0");
 
-        // Mantiene tutta la navigazione IN-APP
-        webView.setWebViewClient(new WebViewClient() {
+        // Evita “apri nel browser” e gestisce piccoli errori di navigazione/cached POST
+        wv.setWebViewClient(new WebViewClient() {
             @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                view.loadUrl(request.getUrl().toString());
                 return true;
             }
-        });
-        webView.setWebChromeClient(new WebChromeClient());
 
-        // Se offline mostra una pagina minima
-        if (isOnline()) {
-            webView.loadUrl(APP_URL);
-        } else {
-            String offline = "<html><body style='font-family:sans-serif;padding:24px'>"
-                    + "<h2>Sei offline</h2>"
-                    + "<p>Controlla la connessione e riapri l'app.</p>"
-                    + "</body></html>";
-            webView.loadDataWithBaseURL(null, offline, "text/html", "UTF-8", null);
-        }
+            @Override
+            @SuppressWarnings("deprecation")
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                // Retry “pulito” se capita ERR_CACHE_MISS o simili
+                view.clearCache(true);
+                view.loadUrl(START_URL);
+            }
+        });
+
+        // Avvio “pulito”
+        wv.clearCache(true);
+        wv.loadUrl(START_URL);
     }
 
     @Override
     public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
+        WebView wv = binding.webview;
+        if (wv.canGoBack()) {
+            wv.goBack();
         } else {
             super.onBackPressed();
         }
-    }
-
-    private boolean isOnline() {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-        if (cm == null) return false;
-        NetworkInfo ni = cm.getActiveNetworkInfo();
-        return ni != null && ni.isConnected();
     }
 }
