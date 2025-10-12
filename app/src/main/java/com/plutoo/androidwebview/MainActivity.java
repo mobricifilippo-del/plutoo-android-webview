@@ -1,95 +1,104 @@
 package com.plutoo.androidwebview;
 
 import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import androidx.annotation.Nullable;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
-
     private WebView webView;
 
-    private static final String APP_URL = "https://plutoo-official.vercel.app/";
+    // ✅ HOME della tua web-app (non pagina profilo)
+    private static final String START_URL = "https://plutoo-official.vercel.app/";
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        webView = new WebView(this);
-        setContentView(webView);
+        setContentView(R.layout.activity_main);
+        webView = findViewById(R.id.webview);
 
-        // --- WebView setup sicuro ma completo
+        // ——— Config completa e sicura della WebView
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
         s.setLoadWithOverviewMode(true);
         s.setUseWideViewPort(true);
-        s.setSupportZoom(false);
         s.setMediaPlaybackRequiresUserGesture(false);
-        s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        s.setSupportMultipleWindows(true);
+        s.setJavaScriptCanOpenWindowsAutomatically(true);
+        s.setCacheMode(WebSettings.LOAD_DEFAULT);
+
+        CookieManager.getInstance().setAcceptCookie(true);
+        CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
 
         webView.setWebChromeClient(new WebChromeClient());
 
         webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
+            // Mantieni tutta la navigazione dentro la WebView
+            @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
+                v.loadUrl(r.getUrl().toString());
+                return true;
+            }
 
-                // 1) rimuovi eventuale overlay/modale “Profilo”
-                String jsHideOverlay =
-                        "(() => {"
-                      + "  function kill() {"
-                      + "    const labels = Array.from(document.querySelectorAll('*'))"
-                      + "      .filter(n => n && n.textContent && n.textContent.trim().toLowerCase() === 'profilo');"
-                      + "    if (labels.length) {"
-                      + "      const dialog = labels[0].closest('[role=\"dialog\"], .modal, .dialog, .overlay');"
-                      + "      if (dialog) dialog.remove();"
-                      + "    }"
-                      + "    const backdrops = document.querySelectorAll('.modal-backdrop, .overlay, .backdrop');"
-                      + "    backdrops.forEach(b => b.remove());"
-                      + "    document.body.style.overflow = 'auto';"
-                      + "  }"
-                      + "  kill();"
-                      + "  window.__plutooKiller = window.__plutooKiller || setInterval(kill, 500);"
-                      + "})();";
-
-                view.evaluateJavascript(jsHideOverlay, null);
-
-                // 2) abilita lo scroll nel body se bloccato da CSS
-                String jsEnableScroll =
-                        "document.documentElement.style.overflow='auto';"
-                      + "document.body.style.overflow='auto'";
-                view.evaluateJavascript(jsEnableScroll, null);
+            @Override public void onPageStarted(WebView v, String url, Bitmap favicon) {
+                // se per qualsiasi motivo si finisce su una pagina interna al primo avvio, ritorna alla HOME
+                if (isFirstLoadToWrongPage(url)) {
+                    v.stopLoading();
+                    v.loadUrl(bustedStartUrl());
+                }
             }
         });
 
-        if (savedInstanceState == null) {
-            webView.loadUrl(APP_URL);
+        // ——— Pulisci cache/stato per evitare redirect persistenti (service worker / SW cache)
+        webView.clearHistory();
+        webView.clearCache(true);
+        CookieManager.getInstance().removeAllCookies(null);
+        CookieManager.getInstance().flush();
+
+        if (savedInstanceState != null) {
+            // Se torni da rotazione, ripristina stato WebView
+            webView.restoreState(savedInstanceState);
+        } else {
+            // Carica SEMPRE la HOME, con cache-buster per evitare profilo in cache
+            webView.loadUrl(bustedStartUrl());
         }
+
+        // Tasto indietro → cronologia WebView
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override public void handleOnBackPressed() {
+                if (webView.canGoBack()) webView.goBack(); else finish();
+            }
+        });
+    }
+
+    private String bustedStartUrl() {
+        long t = System.currentTimeMillis();
+        return START_URL + (START_URL.contains("?") ? "&" : "?") + "t=" + t;
+    }
+
+    // Se al primo caricamento troviamo una rotta interna (es. /profile, /dog/123, ecc.), forziamo HOME
+    private boolean isFirstLoadToWrongPage(String url) {
+        if (url == null) return false;
+        // consenti solo la home root del dominio
+        return url.startsWith("https://plutoo-official.vercel.app/")
+                && !url.equals("https://plutoo-official.vercel.app/")
+                && !url.startsWith("https://plutoo-official.vercel.app/?");
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        webView.saveState(outState);
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        webView.restoreState(savedInstanceState);
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
+    protected void onSaveInstanceState(Bundle out) {
+        super.onSaveInstanceState(out);
+        webView.saveState(out);
     }
 }
