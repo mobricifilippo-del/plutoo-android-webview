@@ -2,19 +2,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.plutoo.androidwebview">
 
+    <!-- Permesso internet per caricare il sito -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:label="Plutoo"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
         android:theme="@style/Theme.Plutoo">
-
-        <!-- *** UNICA attività con LAUNCHER: elimina duplicati icona *** -->
+        
+        <!-- *** UNICA activity con MAIN + LAUNCHER *** -->
         <activity
-            android:name=".androidwebview.MainActivity"
+            android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTask">
             <intent-filter>
@@ -23,6 +25,9 @@
             </intent-filter>
         </activity>
 
-        <!-- NON mettere altre activity con MAIN/LAUNCHER o activity-alias -->
+        <!-- IMPORTANTE: Nessun altro <activity> o <activity-alias> con LAUNCHER -->
+        <!-- Se nel tuo manifest avevi SplashActivity, ShortcutActivity, TWA, ecc.
+             rimuovile o togli loro l’intent-filter LAUNCHER. -->
+
     </application>
 </manifest>
