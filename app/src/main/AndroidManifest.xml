@@ -7,13 +7,15 @@
         android:label="Plutoo"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+        android:theme="@style/Theme.Plutoo">
 
-        <!-- UNICA activity avviabile -->
+        <!-- Unica activity lanciabile (niente alias, niente duplicati) -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTask">
+            android:launchMode="singleInstance"
+            android:taskAffinity=""
+            android:configChanges="orientation|screenSize|keyboardHidden|uiMode">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
