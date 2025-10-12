@@ -20,19 +20,33 @@ jobs:
           java-version: 17
           cache: gradle
 
-      # 1) Dare i permessi PRIMA di usare gradlew
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # 2) Aggiornare il wrapper alla 8.9
+      # RIPRISTINA IL WRAPPER SE MANCANTE
+      - name: Ensure Gradle wrapper bootstrap
+        run: |
+          mkdir -p gradle/wrapper
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            curl -sL -o gradle/wrapper/gradle-wrapper.jar \
+              https://repo.gradle.org/gradle/libs-releases-local/org/gradle/gradle-wrapper/8.9/gradle-wrapper-8.9.jar
+          fi
+          if [ ! -f gradle/wrapper/gradle-wrapper.properties ]; then
+            cat > gradle/wrapper/gradle-wrapper.properties <<'EOF'
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.9-all.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+EOF
+          fi
+
       - name: Generate Gradle wrapper 8.9
         run: ./gradlew wrapper --gradle-version 8.9
 
-      # 3) Build APK debug
       - name: Assemble Debug
         run: ./gradlew :app:assembleDebug --stacktrace
 
-      # 4) Caricare l'APK
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
