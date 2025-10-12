@@ -20,15 +20,19 @@ jobs:
           java-version: 17
           cache: gradle
 
-      - name: Generate Gradle wrapper 8.9
-        run: ./gradlew wrapper --gradle-version 8.9
-
+      # 1) Dare i permessi PRIMA di usare gradlew
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      # 2) Aggiornare il wrapper alla 8.9
+      - name: Generate Gradle wrapper 8.9
+        run: ./gradlew wrapper --gradle-version 8.9
+
+      # 3) Build APK debug
       - name: Assemble Debug
         run: ./gradlew :app:assembleDebug --stacktrace
 
+      # 4) Caricare l'APK
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
