@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.plutoo.androidwebview">
 
-    <!-- Permessi rete -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- Permessi posizione per geolocalizzazione HTML5 nel WebView -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -15,31 +11,19 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Plutoo"
-        android:usesCleartextTraffic="true">
+        android:theme="@style/Theme.Plutoo">
 
-        <!-- UNICA activity con icona (niente duplicati) -->
+        <!-- *** UNICO launcher dell’app *** -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize|smallestScreenSize|locale|layoutDirection|uiMode"
-            android:resizeableActivity="true"
-            android:screenOrientation="unspecified">
-
-            <!-- Launcher -->
+            android:theme="@style/Theme.Plutoo">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-            <!-- Deep link in-app per il tuo dominio -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="plutoo-official.vercel.app" />
-            </intent-filter>
         </activity>
 
+        <!-- NIENTE altri <activity> o <activity-alias> con MAIN/LAUNCHER -->
     </application>
 </manifest>
