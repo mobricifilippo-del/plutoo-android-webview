@@ -2,78 +2,53 @@ package com.plutoo.androidwebview;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import androidx.activity.OnBackPressedCallback;
-import androidx.annotation.Nullable;
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String START_URL = "https://plutoo-official.vercel.app/#home";
     private WebView webView;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        webView = findViewById(R.id.webview);
+        webView = findViewById(R.id.webView);
+        WebSettings webSettings = webView.getSettings();
 
-        WebSettings ws = webView.getSettings();
-        ws.setJavaScriptEnabled(true);
-        ws.setDomStorageEnabled(true);
-        ws.setDatabaseEnabled(true);
-        ws.setLoadWithOverviewMode(true);
-        ws.setUseWideViewPort(true);
-        ws.setBuiltInZoomControls(false);
-        ws.setDisplayZoomControls(false);
-        ws.setCacheMode(WebSettings.LOAD_DEFAULT);
-        ws.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        webSettings.setJavaScriptEnabled(true);
+        webSettings.setDomStorageEnabled(true);
+        webSettings.setLoadWithOverviewMode(true);
+        webSettings.setUseWideViewPort(true);
+        webSettings.setSupportZoom(false);
+        webSettings.setBuiltInZoomControls(false);
+        webSettings.setDisplayZoomControls(false);
+        webSettings.setMediaPlaybackRequiresUserGesture(false);
+        webSettings.setAllowFileAccess(true);
+        webSettings.setAllowContentAccess(true);
+        webSettings.setDatabaseEnabled(true);
 
-        CookieManager.getInstance().setAcceptCookie(true);
-        CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
-
-        // Resta dentro l’app
         webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient());
 
-        // Carica la Home (non il profilo)
-        if (savedInstanceState == null) {
-            webView.loadUrl(START_URL);
+        // URL ufficiale dell’app web
+        webView.loadUrl("https://plutoo-official.vercel.app/");
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (webView != null && webView.canGoBack()) {
+            webView.goBack();
         } else {
-            webView.restoreState(savedInstanceState);
+            super.onBackPressed();
         }
-
-        // Back va indietro nella WebView
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override public void handleOnBackPressed() {
-                if (webView != null && webView.canGoBack()) {
-                    webView.goBack();
-                } else {
-                    finish();
-                }
-            }
-        });
-    }
-
-    @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if (webView != null) webView.saveState(outState);
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (webView != null) {
-            webView.destroy();
-            webView = null;
-        }
-        super.onDestroy();
     }
 }
