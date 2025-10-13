@@ -3,11 +3,14 @@ plugins {
 }
 
 android {
-    namespace "com.plutoo.wrappertest"   // deve combaciare con il package Java e col Manifest
+    // <- NOME INTERNO DELL’APP
+    namespace "com.plutoo.app"
+
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.plutoo.wrappertest"
+        // <- APPLICATION ID DEFINITIVO
+        applicationId "com.plutoo.app"
         minSdk 24
         targetSdk 35
         versionCode 1
