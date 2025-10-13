@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.plutoo.wrappertest">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
     <application
         android:allowBackup="false"
-        android:label="Plutoo Test"                         <!-- label diversa = riconoscibile -->
+        android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Plutoo">
-
+        <!-- UNICA Activity con MAIN + LAUNCHER -->
         <activity
-            android:name=".MainActivity"
+            android:name="com.plutoo.wrappertest.MainActivity"
             android:exported="true"
             android:launchMode="singleTask">
             <intent-filter>
@@ -22,6 +21,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!-- Nessun altro LAUNCHER -->
+        <!-- Nessun’altra activity/alias con LAUNCHER -->
     </application>
 </manifest>
