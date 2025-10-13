@@ -1,16 +1,15 @@
-
 plugins {
-    id 'com.android.application'
+    id("com.android.application")
 }
 
 android {
-    namespace 'com.plutoo.wrappertest'
-    compileSdk 34
+    namespace "com.plutoo.wrappertest"   // deve combaciare con il package Java e col Manifest
+    compileSdk 35
 
     defaultConfig {
-        applicationId 'com.plutoo.wrappertest'
+        applicationId "com.plutoo.wrappertest"
         minSdk 24
-        targetSdk 34
+        targetSdk 35
         versionCode 1
         versionName "1.0"
     }
@@ -21,8 +20,12 @@ android {
         }
         release {
             minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
+    }
+
+    buildFeatures {
+        viewBinding true
     }
 
     compileOptions {
@@ -32,9 +35,8 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'com.google.android.material:material:1.11.0'   // Material 3 (tema)
-    implementation 'androidx.webkit:webkit:1.9.0'                  // WebView aggiornato
-    implementation 'androidx.activity:activity:1.9.2'              // EdgeToEdge.enable(...)
-    implementation 'androidx.core:core:1.13.1'
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.activity:activity:1.9.2")
+    implementation("androidx.webkit:webkit:1.11.0")
 }
