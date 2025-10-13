@@ -1,20 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.plutoo.androidwebview">
+    package="com.plutoo.wrappertest">
 
-    <!-- Permesso internet per caricare il sito -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="false"
-        android:label="Plutoo"
+        android:label="Plutoo Test"                         <!-- label diversa = riconoscibile -->
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Plutoo">
-        
-        <!-- *** UNICA activity con MAIN + LAUNCHER *** -->
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -24,10 +22,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- IMPORTANTE: Nessun altro <activity> o <activity-alias> con LAUNCHER -->
-        <!-- Se nel tuo manifest avevi SplashActivity, ShortcutActivity, TWA, ecc.
-             rimuovile o togli loro l’intent-filter LAUNCHER. -->
-
+        <!-- Nessun altro LAUNCHER -->
     </application>
 </manifest>
