@@ -1,12 +1,4 @@
-// Top-level build file
-
-plugins {
-    id 'com.android.application' version '8.9.0' apply false
-}
-
-task clean(type: Delete) {
-    delete rootProject.buildDir
-}
+// Top-level build file for Plutoo Android WebView
 
 buildscript {
     repositories {
@@ -14,7 +6,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.9.0'
+        classpath "com.android.tools.build:gradle:8.9.0"
     }
 }
 
@@ -23,4 +15,8 @@ allprojects {
         google()
         mavenCentral()
     }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }
