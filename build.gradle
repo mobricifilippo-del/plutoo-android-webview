@@ -1,9 +1,20 @@
-// build.gradle (Project)
-plugins {
-    id 'com.android.application' version '8.7.0' apply false
-    // se non hai moduli library non serve altro
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.7.0'
+    }
 }
 
-tasks.register("clean", Delete) {
-    delete(rootProject.buildDir)
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }
