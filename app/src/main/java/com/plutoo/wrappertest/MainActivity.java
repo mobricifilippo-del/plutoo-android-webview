@@ -9,6 +9,7 @@ import android.webkit.WebStorage;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -20,46 +21,43 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        // --- PULIZIA FORZATA (evita schermate bloccate o cache vecchia) ---
+        // Pulizia cache/cookie -> evita ERR_CACHE_MISS e vecchi redirect
+        try {
+            WebStorage.getInstance().deleteAllData();
+        } catch (Exception ignored) {}
         try {
             CookieManager cm = CookieManager.getInstance();
             cm.setAcceptCookie(true);
             cm.removeAllCookies(null);
             cm.flush();
-            WebStorage.getInstance().deleteAllData();
-            getCacheDir().delete();
-        } catch (Throwable ignored) {}
+        } catch (Exception ignored) {}
 
         webView = findViewById(R.id.webView);
-        WebSettings s = webView.getSettings();
-        s.setJavaScriptEnabled(true);
-        s.setDomStorageEnabled(true);
-        s.setLoadWithOverviewMode(true);
-        s.setUseWideViewPort(true);
-        s.setSupportZoom(false);
-        s.setBuiltInZoomControls(false);
-        s.setDisplayZoomControls(false);
-        s.setMediaPlaybackRequiresUserGesture(false);
-        s.setAllowFileAccess(true);
-        s.setAllowContentAccess(true);
-        s.setDatabaseEnabled(true);
 
-        webView.setWebViewClient(new WebViewClient(){
-            @Override
-            public void onPageFinished(WebView v, String url) {
-                // Se non siamo su /#home, forziamo la Home con cache-buster
-                if (!url.contains("#home")) {
-                    long t = System.currentTimeMillis();
-                    v.loadUrl(BASE + "#home?t=" + t);
-                }
-            }
-        });
+        WebSettings ws = webView.getSettings();
+        ws.setJavaScriptEnabled(true);
+        ws.setDomStorageEnabled(true);
+        ws.setLoadWithOverviewMode(true);
+        ws.setUseWideViewPort(true);
+        ws.setSupportZoom(false);
+        ws.setBuiltInZoomControls(false);
+        ws.setDisplayZoomControls(false);
+        ws.setMediaPlaybackRequiresUserGesture(false);
+        ws.setAllowFileAccess(true);
+        ws.setAllowContentAccess(true);
+        ws.setDatabaseEnabled(true);
+        ws.setCacheMode(WebSettings.LOAD_NO_CACHE);   // niente cache
+
+        webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient());
 
-        // Prima navigazione: base (verrà reindirizzata a /#home nell'onPageFinished)
-        webView.loadUrl(BASE);
+        // Forza la vera Home con cache-buster (niente sola pagina “profilo”)
+        String url = BASE + "#home?t=" + System.currentTimeMillis();
+        webView.clearCache(true);
+        webView.loadUrl(url);
     }
 
     @Override
