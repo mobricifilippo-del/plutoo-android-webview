@@ -2,13 +2,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.plutoo.app">
 
+    <!-- Permessi ESSENZIALI -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Geolocalizzazione per “Vicino a te” / Luoghi PET -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- Non obbligatorio, ma esplicitiamo che il GPS non è “obbligatorio” per installare -->
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
+        android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+        android:usesCleartextTraffic="false">
 
         <activity
             android:name=".MainActivity"
@@ -22,6 +32,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-    </application>
 
+    </application>
 </manifest>
