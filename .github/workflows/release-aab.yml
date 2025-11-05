@@ -29,10 +29,10 @@ jobs:
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses
 
-      - name: Install Gradle 8.7 (no wrapper)
+      - name: Install Gradle 8.9 (no wrapper)
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: 8.7
+          gradle-version: 8.9
 
       # 1) Genera una NUOVA keystore sul runner (sicura)
       - name: Generate release keystore
