@@ -34,54 +34,34 @@ jobs:
         with:
           gradle-version: 8.9
 
-      # 1) Genera una NUOVA keystore sul runner (sicura)
-      - name: Generate release keystore
+      # ✅ Usa la TUA keystore salvata nei secrets (niente generazione nuova)
+      - name: Write keystore from secrets (Base64 -> keystore.jks)
         shell: bash
         run: |
-          KEYSTORE_PATH="$RUNNER_TEMP/plutoo-release.jks"
-          echo "Keystore path: $KEYSTORE_PATH"
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
+          echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/keystore.jks" >> $GITHUB_ENV
 
-          keytool -genkeypair -v \
-            -keystore "$KEYSTORE_PATH" \
-            -alias "$KEY_ALIAS" \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass "$KEYSTORE_PASSWORD" \
-            -keypass "$KEY_PASSWORD" \
-            -dname "CN=Plutoo,O=Plutoo,C=IT"
+      # (facoltativo) stampa SHA-1 per verificarla con la Console (Certificato chiave di caricamento)
+      - name: Print upload cert SHA-1
+        run: |
+          keytool -list -v \
+            -keystore "$GITHUB_WORKSPACE/keystore.jks" \
+            -alias "${{ secrets.KEY_ALIAS }}" \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -keypass "${{ secrets.KEY_PASSWORD }}" | grep -i "SHA1" || true
 
-          keytool -export -rfc \
-            -alias "$KEY_ALIAS" \
-            -keystore "$KEYSTORE_PATH" \
-            -storepass "$KEYSTORE_PASSWORD" \
-            -file upload_cert.pem
-
-          echo "KEYSTORE_PATH=$KEYSTORE_PATH" >> $GITHUB_ENV
-
-      # 2) Build + firma AAB
+      # Build + firma AAB con la tua keystore
       - name: Build bundleRelease (signed by Gradle)
         shell: bash
         run: |
           gradle clean :app:bundleRelease --stacktrace \
-            -Pandroid.injected.signing.store.file="$KEYSTORE_PATH" \
+            -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/keystore.jks" \
             -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
 
-      # 3) Carica artifact: AAB + keystore + certificato
       - name: Upload signed AAB
         uses: actions/upload-artifact@v4
         with:
           name: app-release.aab
           path: app/build/outputs/bundle/release/*.aab
-
-      - name: Upload keystore
-        uses: actions/upload-artifact@v4
-        with:
-          name: plutoo-release.jks
-          path: ${{ env.KEYSTORE_PATH }}
-
-      - name: Upload upload certificate
-        uses: actions/upload-artifact@v4
-        with:
-          name: upload_cert.pem
-          path: upload_cert.pem
