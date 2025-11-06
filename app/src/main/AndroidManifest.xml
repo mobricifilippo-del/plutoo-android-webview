@@ -2,13 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.plutoo.app">
 
-    <!-- ✅ Permesso obbligatorio per ID pubblicitario AdMob -->
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+    <!-- ✅ Permesso obbligatorio ID pubblicitario -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="merge" />
 
     <!-- 🌐 Permessi essenziali -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- 📍 Geolocalizzazione (Vicino a te / Servizi PET) -->
+    <!-- 📍 Geolocalizzazione -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
