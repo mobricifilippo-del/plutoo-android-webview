@@ -12,7 +12,7 @@ android {
         targetSdk 35
 
         // === VERSIONE AGGIORNATA PER LA RELEASE ===
-        versionCode 4
+        versionCode 5
         versionName '1.0.2'
     }
 
