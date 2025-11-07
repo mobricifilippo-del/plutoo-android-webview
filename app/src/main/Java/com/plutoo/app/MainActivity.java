@@ -12,7 +12,6 @@ import android.webkit.WebStorage;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -21,61 +20,74 @@ import androidx.core.content.ContextCompat;
 public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
-    private static final String BASE = "https://plutoo-official.vercel.app/";
-    private static final int REQ_LOCATION = 1001;
+    private static final String BASE_URL = "https://plutoo-official.vercel.app/";
+    private static final int REQUEST_LOCATION = 1001;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        // Pulizia cache/cookie per evitare redirect/caching strani al primo avvio
-        try { WebStorage.getInstance().deleteAllData(); } catch (Exception ignored) {}
+        
         try {
-            CookieManager cm = CookieManager.getInstance();
-            cm.setAcceptCookie(true);
-            cm.removeAllCookies(null);
-            cm.flush();
-        } catch (Exception ignored) {}
+            setContentView(R.layout.activity_main);
+        } catch (Exception e) {
+            e.printStackTrace();
+            finish();
+            return;
+        }
 
         webView = findViewById(R.id.webView);
+        
+        if (webView == null) {
+            finish();
+            return;
+        }
 
-        WebSettings ws = webView.getSettings();
-        ws.setJavaScriptEnabled(true);
-        ws.setDomStorageEnabled(true);
-        ws.setLoadWithOverviewMode(true);
-        ws.setUseWideViewPort(true);
-        ws.setSupportZoom(false);
-        ws.setBuiltInZoomControls(false);
-        ws.setDisplayZoomControls(false);
-        ws.setMediaPlaybackRequiresUserGesture(false);
-        ws.setAllowFileAccess(true);
-        ws.setAllowContentAccess(true);
-        ws.setDatabaseEnabled(true);
-        ws.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        setupWebView();
+        loadUrl();
+        requestLocationPermissionIfNeeded();
+    }
 
-        // ✅ Geolocalizzazione HTML5 nel WebView
-        try { ws.setGeolocationEnabled(true); } catch (Throwable ignored) {}
+    private void setupWebView() {
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
+        settings.setSupportZoom(false);
+        settings.setBuiltInZoomControls(false);
+        settings.setDisplayZoomControls(false);
+        settings.setMediaPlaybackRequiresUserGesture(false);
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
+        settings.setDatabaseEnabled(true);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setGeolocationEnabled(true);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
-        webView.setWebViewClient(new WebViewClient());
-
-        webView.setWebChromeClient(new WebChromeClient() {
-            // Concede alle pagine l’uso della geolocalizzazione se i permessi Android sono già concessi
+        webView.setWebViewClient(new WebViewClient() {
             @Override
-            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
-                boolean granted = hasLocationPermission();
-                callback.invoke(origin, granted, false);
+            public void onReceivedError(android.webkit.WebView view, int errorCode, String description, String failingUrl) {
+                super.onReceivedError(view, errorCode, description, failingUrl);
             }
         });
 
-        // Carica la vera home con cache-buster
-        String url = BASE + "#home?t=" + System.currentTimeMillis();
-        webView.clearCache(true);
-        webView.loadUrl(url);
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                callback.invoke(origin, hasLocationPermission(), false);
+            }
+        });
+    }
 
-        // Se non hai ancora concesso i permessi di localizzazione, chiedili ora
-        requestLocationPermissionIfNeeded();
+    private void loadUrl() {
+        try {
+            CookieManager cookieManager = CookieManager.getInstance();
+            cookieManager.setAcceptCookie(true);
+            cookieManager.setAcceptThirdPartyCookies(webView, true);
+        } catch (Exception ignored) {}
+
+        webView.loadUrl(BASE_URL);
     }
 
     private boolean hasLocationPermission() {
@@ -86,12 +98,12 @@ public class MainActivity extends AppCompatActivity {
     private void requestLocationPermissionIfNeeded() {
         if (!hasLocationPermission()) {
             ActivityCompat.requestPermissions(
-                    this,
-                    new String[]{
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                    },
-                    REQ_LOCATION
+                this,
+                new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                },
+                REQUEST_LOCATION
             );
         }
     }
@@ -99,8 +111,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQ_LOCATION) {
-            // Dopo la risposta, ricarichiamo l'URL così la pagina può riprovare la geolocalizzazione
+        if (requestCode == REQUEST_LOCATION) {
             webView.reload();
         }
     }
