@@ -2,14 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.plutoo.app">
 
-    <!-- Permessi -->
+    <!-- Permessi necessari per caricare il sito e usare la posizione -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <!-- GPS non obbligatorio -->
-    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <!-- (Promemoria per il futuro AdMob reale)
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+    -->
 
     <application
         android:allowBackup="true"
@@ -17,28 +18,21 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-        android:usesCleartextTraffic="true"
-        android:hardwareAccelerated="true">
+        android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+
+        <!-- NESSUNA android:name qui: niente Application custom che può crashare -->
 
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTask"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustResize"
-            android:hardwareAccelerated="true">
+            android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
 
-        <!-- Meta-data AdMob -->
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
-
     </application>
+
 </manifest>
