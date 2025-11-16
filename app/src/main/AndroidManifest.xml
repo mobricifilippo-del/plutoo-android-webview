@@ -2,16 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.plutoo.app">
 
-    <!-- Permessi necessari per caricare il sito e usare la posizione -->
+    <!-- Permessi necessari -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
-    <!-- Promemoria futuro per AdMob reale -->
-    <!--
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
-    -->
 
     <application
         android:allowBackup="true"
