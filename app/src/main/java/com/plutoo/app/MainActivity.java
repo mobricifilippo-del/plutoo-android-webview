@@ -64,7 +64,6 @@ public class MainActivity extends AppCompatActivity {
 
         // Cache
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        webSettings.setAppCacheEnabled(true);
 
         // Supporto per localStorage e sessionStorage
         webSettings.setDomStorageEnabled(true);
