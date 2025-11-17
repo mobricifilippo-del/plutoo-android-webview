@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
         setupWebView();
 
         // Carica l'URL
-        webView.loadUrl("https://plutoo.vercel.app");
+        webView.loadUrl("https://plutoo-official.vercel.app/");
     }
 
     private void setupWebView() {
