@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Tema unico dell’app, nessuna ActionBar -->
-    <style name="Theme.Plutoo" parent="Theme.Material3.DayNight.NoActionBar" />
+
+    <!-- Tema unico, pulito, nessuna ActionBar -->
+    <style name="Theme.Plutoo" parent="@android:style/Theme.NoTitleBar.Fullscreen" />
+
 </resources>
