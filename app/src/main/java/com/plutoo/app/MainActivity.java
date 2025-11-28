@@ -53,12 +53,8 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(layout);
 
-        // ✅ Forziamo accelerazione hardware (evita crash su alcune release/AAB)
-        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        getWindow().setFlags(
-                android.view.WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-                android.view.WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
-        );
+        // ✅ MODIFICATO: uso software rendering invece di hardware
+        webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
         // Configurazione WebView
         setupWebView();
@@ -133,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
-                // Concediamo sempre la geolocalizzazione (Android chiederà il permesso all’utente)
+                // Concediamo sempre la geolocalizzazione (Android chiederà il permesso all'utente)
                 callback.invoke(origin, true, false);
             }
 
