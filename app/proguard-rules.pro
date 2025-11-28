@@ -6,5 +6,6 @@
 -keep class androidx.** { *; }
 -dontwarn androidx.**
 
-# Keep your Activity
--keep class com.plutoo.wrappertest.MainActivity { *; }
+# Keep your Activity - CORRETTO
+-keep class com.plutoo.app.MainActivity { *; }
+-keep class com.plutoo.app.** { *; }
