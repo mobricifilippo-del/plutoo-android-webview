@@ -12,7 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         android:usesCleartextTraffic="true"
-        android:hardwareAccelerated="true"
+        android:hardwareAccelerated="true">
 
         <activity
             android:name=".MainActivity"
