@@ -53,8 +53,8 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(layout);
 
-        // ✅ MODIFICATO: uso software rendering invece di hardware
-        webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+       // Usa hardware acceleration normale Android
+       webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
         // Configurazione WebView
         setupWebView();
