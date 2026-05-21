@@ -53,6 +53,12 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(layout);
 
+getWindow().getDecorView().setSystemUiVisibility(
+        View.SYSTEM_UI_FLAG_FULLSCREEN |
+        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+);
+
        // Usa hardware acceleration normale Android
        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
