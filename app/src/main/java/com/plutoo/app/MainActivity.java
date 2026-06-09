@@ -28,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        MobileAds.initialize(this);
 
         // Layout contenitore
         FrameLayout layout = new FrameLayout(this);
