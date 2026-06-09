@@ -10,7 +10,6 @@ import android.widget.ProgressBar;
 import android.content.Intent;
 
 import androidx.appcompat.app.AppCompatActivity;
-import com.google.android.gms.ads.MobileAds;
 
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -28,7 +27,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        MobileAds.initialize(this);
 
         // Layout contenitore
         FrameLayout layout = new FrameLayout(this);
@@ -55,14 +53,8 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(layout);
 
-getWindow().getDecorView().setSystemUiVisibility(
-        View.SYSTEM_UI_FLAG_FULLSCREEN |
-        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-);
-
-       // Usa hardware acceleration normale Android
-       webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        // ✅ MODIFICATO: uso software rendering invece di hardware
+        webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
 
         // Configurazione WebView
         setupWebView();
@@ -82,6 +74,7 @@ getWindow().getDecorView().setSystemUiVisibility(
         webSettings.setSupportZoom(false);
         webSettings.setBuiltInZoomControls(false);
         webSettings.setDisplayZoomControls(false);
+        webSettings.setLoadWithOverviewMode(true);
         webSettings.setUseWideViewPort(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
