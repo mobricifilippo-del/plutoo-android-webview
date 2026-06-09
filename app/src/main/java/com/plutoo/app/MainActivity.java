@@ -53,8 +53,14 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(layout);
 
-        // ✅ MODIFICATO: uso software rendering invece di hardware
-        webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+getWindow().getDecorView().setSystemUiVisibility(
+        View.SYSTEM_UI_FLAG_FULLSCREEN |
+        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+);
+
+       // Usa hardware acceleration normale Android
+       webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
         // Configurazione WebView
         setupWebView();
@@ -74,7 +80,6 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setSupportZoom(false);
         webSettings.setBuiltInZoomControls(false);
         webSettings.setDisplayZoomControls(false);
-        webSettings.setLoadWithOverviewMode(true);
         webSettings.setUseWideViewPort(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
