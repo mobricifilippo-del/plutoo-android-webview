@@ -10,6 +10,7 @@ import android.widget.ProgressBar;
 import android.content.Intent;
 
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.gms.ads.MobileAds;
 
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
