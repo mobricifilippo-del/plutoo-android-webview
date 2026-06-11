@@ -66,7 +66,7 @@ getWindow().getDecorView().setSystemUiVisibility(
         setupWebView();
 
         // Carica Plutoo
-        webView.loadUrl("https://plutoo-official.vercel.app/");
+        webView.loadUrl("https://plutoo-official.vercel.app/?app=android");
     }
 
     private void setupWebView() {
