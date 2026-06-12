@@ -14,6 +14,10 @@
         android:usesCleartextTraffic="true"
         android:hardwareAccelerated="true">
 
+        <meta-data
+    android:name="com.google.android.gms.ads.APPLICATION_ID"
+    android:value="ca-app-pub-5458345293928736~5749790476" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
