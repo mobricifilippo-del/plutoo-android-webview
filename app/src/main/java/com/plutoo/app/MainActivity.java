@@ -3,6 +3,7 @@ package com.plutoo.app;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
 import android.graphics.Bitmap;
 import android.widget.FrameLayout;
@@ -41,9 +42,18 @@ public class MainActivity extends AppCompatActivity {
 
         // Layout contenitore
         FrameLayout layout = new FrameLayout(this);
+
         adView = new AdView(this);
 
-        adView.setAdUnitId("ca-app-pub-5458345293928736/3837438698");
+FrameLayout.LayoutParams adParams =
+        new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+        );
+adParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+adView.setLayoutParams(adParams);
+
+adView.setAdUnitId("ca-app-pub-5458345293928736/3837438698");
 adView.setAdSize(AdSize.BANNER);
 adView.loadAd(new AdRequest.Builder().build());
 
