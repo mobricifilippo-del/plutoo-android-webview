@@ -25,6 +25,9 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.rewarded.RewardedAd;
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.AdSize;
 
 public class MainActivity extends AppCompatActivity {
@@ -33,6 +36,9 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private AdView adView;
     private RewardedAd rewardedAd;
+
+    private static final String REWARDED_AD_UNIT_ID =
+        "ca-app-pub-5458345293928736/7078342992";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
