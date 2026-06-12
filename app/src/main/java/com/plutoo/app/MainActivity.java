@@ -124,10 +124,13 @@ getWindow().getDecorView().setSystemUiVisibility(
        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
         // Configurazione WebView
-        setupWebView();
+setupWebView();
 
-        // Carica Plutoo
-        webView.loadUrl("https://plutoo-official.vercel.app/?app=android");
+// Precarica Rewarded AdMob
+loadRewardedAd();
+
+// Carica Plutoo
+webView.loadUrl("https://plutoo-official.vercel.app/?app=android");
     }
 
     private void setupWebView() {
