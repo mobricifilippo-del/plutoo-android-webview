@@ -43,6 +43,10 @@ public class MainActivity extends AppCompatActivity {
         FrameLayout layout = new FrameLayout(this);
         adView = new AdView(this);
 
+        adView.setAdUnitId("ca-app-pub-5458345293928736/3837438698");
+adView.setAdSize(AdSize.BANNER);
+adView.loadAd(new AdRequest.Builder().build());
+
         // WebView
         webView = new WebView(this);
         webView.setLayoutParams(new FrameLayout.LayoutParams(
