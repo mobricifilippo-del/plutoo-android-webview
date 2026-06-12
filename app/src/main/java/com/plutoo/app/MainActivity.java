@@ -22,13 +22,13 @@ import android.webkit.GeolocationPermissions;
 import android.webkit.PermissionRequest;
 
 import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
-import com.google.android.gms.ads.FullScreenContentCallback;
-import com.google.android.gms.ads.LoadAdError;
-import com.google.android.gms.ads.AdSize;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -38,28 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private RewardedAd rewardedAd;
 
     private static final String REWARDED_AD_UNIT_ID =
-        "ca-app-pub-5458345293928736/7078342992";
-
-    private void loadRewardedAd() {
-
-    RewardedAd.load(
-            this,
-            REWARDED_AD_UNIT_ID,
-            new AdRequest.Builder().build(),
-            new RewardedAdLoadCallback() {
-
-                @Override
-                public void onAdLoaded(RewardedAd ad) {
-                    rewardedAd = ad;
-                }
-
-                @Override
-                public void onAdFailedToLoad(LoadAdError loadAdError) {
-                    rewardedAd = null;
-                }
-            }
-    );
-    }
+            "ca-app-pub-5458345293928736/7078342992";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,72 +46,145 @@ public class MainActivity extends AppCompatActivity {
 
         MobileAds.initialize(this, initializationStatus -> {});
 
-        // Layout contenitore
         FrameLayout layout = new FrameLayout(this);
 
         adView = new AdView(this);
 
-FrameLayout.LayoutParams adParams =
-        new FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams adParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT
         );
-adParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-adView.setLayoutParams(adParams);
+        adParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        adView.setLayoutParams(adParams);
 
-adView.setAdUnitId("ca-app-pub-5458345293928736/3837438698");
-adView.setAdSize(AdSize.BANNER);
-adView.loadAd(new AdRequest.Builder().build());
+        adView.setAdUnitId("ca-app-pub-5458345293928736/3837438698");
+        adView.setAdSize(AdSize.BANNER);
+        adView.loadAd(new AdRequest.Builder().build());
 
-    // WebView
-webView = new WebView(this);
+        webView = new WebView(this);
 
-FrameLayout.LayoutParams webParams =
-        new FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams webParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT
         );
-webParams.bottomMargin = AdSize.BANNER.getHeightInPixels(this);
+        webParams.bottomMargin = AdSize.BANNER.getHeightInPixels(this);
+        webView.setLayoutParams(webParams);
 
-webView.setLayoutParams(webParams);
-        
-
-        // Progress bar in alto
         progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         progressBar.setLayoutParams(new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 10
         ));
-        
         progressBar.setMax(100);
         progressBar.setVisibility(View.GONE);
 
-    // Aggiungo al layout
-layout.addView(webView);
-layout.addView(progressBar);
-layout.addView(adView);
+        layout.addView(webView);
+        layout.addView(progressBar);
+        layout.addView(adView);
 
-setContentView(layout);
+        setContentView(layout);
 
-getWindow().getDecorView().setSystemUiVisibility(
-        View.SYSTEM_UI_FLAG_FULLSCREEN |
-        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-);
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_FULLSCREEN |
+                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        );
 
-       // Usa hardware acceleration normale Android
-       webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
-        // Configurazione WebView
-setupWebView();
+        setupWebView();
 
-webView.addJavascriptInterface(new PlutooJsBridge(), "AndroidBridge");
+        webView.addJavascriptInterface(new PlutooJsBridge(), "AndroidBridge");
 
-// Precarica Rewarded AdMob
-loadRewardedAd();
+        loadRewardedAd();
 
-// Carica Plutoo
-webView.loadUrl("https://plutoo-official.vercel.app/?app=android");
+        webView.loadUrl("https://plutoo-official.vercel.app/?app=android");
+    }
+
+    private void loadRewardedAd() {
+        RewardedAd.load(
+                this,
+                REWARDED_AD_UNIT_ID,
+                new AdRequest.Builder().build(),
+                new RewardedAdLoadCallback() {
+                    @Override
+                    public void onAdLoaded(RewardedAd ad) {
+                        rewardedAd = ad;
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(LoadAdError loadAdError) {
+                        rewardedAd = null;
+                    }
+                }
+        );
+    }
+
+    private void showRewardedAd() {
+        if (rewardedAd == null) {
+            notifyRewardFailed();
+            loadRewardedAd();
+            return;
+        }
+
+        final boolean[] rewardEarned = {false};
+
+        rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+            @Override
+            public void onAdDismissedFullScreenContent() {
+                rewardedAd = null;
+                loadRewardedAd();
+
+                if (!rewardEarned[0]) {
+                    notifyRewardFailed();
+                }
+            }
+
+            @Override
+            public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
+                rewardedAd = null;
+                loadRewardedAd();
+                notifyRewardFailed();
+            }
+        });
+
+        rewardedAd.show(this, rewardItem -> {
+            rewardEarned[0] = true;
+            notifyRewardEarned();
+        });
+    }
+
+    public class PlutooJsBridge {
+        @JavascriptInterface
+        public void showRewarded() {
+            runOnUiThread(() -> showRewardedAd());
+        }
+    }
+
+    private void notifyRewardEarned() {
+        if (webView == null) return;
+
+        runOnUiThread(() -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                webView.evaluateJavascript(
+                        "window.onRewardEarned && window.onRewardEarned();",
+                        null
+                );
+            }
+        });
+    }
+
+    private void notifyRewardFailed() {
+        if (webView == null) return;
+
+        runOnUiThread(() -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                webView.evaluateJavascript(
+                        "window.onRewardFailed && window.onRewardFailed();",
+                        null
+                );
+            }
+        });
     }
 
     private void setupWebView() {
@@ -152,21 +204,16 @@ webView.loadUrl("https://plutoo-official.vercel.app/?app=android");
             webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
 
-        // Client per navigazione interna e progress bar
         webView.setWebViewClient(new WebViewClient() {
-
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                // Manteniamo tutto dentro la WebView, tranne link esterni speciali
                 if (request != null && request.getUrl() != null) {
                     String url = request.getUrl().toString();
 
-                    // Se è http/https restiamo nella WebView
                     if (url.startsWith("http://") || url.startsWith("https://")) {
                         return false;
                     }
 
-                    // Per altri schemi (tel:, mailto:, ecc.) usiamo le app esterne
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                     try {
                         startActivity(intent);
@@ -190,9 +237,7 @@ webView.loadUrl("https://plutoo-official.vercel.app/?app=android");
             }
         });
 
-        // Chrome client (geolocalizzazione, progress bar, permessi media)
         webView.setWebChromeClient(new WebChromeClient() {
-
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
                 progressBar.setProgress(newProgress);
@@ -200,7 +245,6 @@ webView.loadUrl("https://plutoo-official.vercel.app/?app=android");
 
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
-                // Concediamo sempre la geolocalizzazione (Android chiederà il permesso all'utente)
                 callback.invoke(origin, true, false);
             }
 
@@ -210,77 +254,28 @@ webView.loadUrl("https://plutoo-official.vercel.app/?app=android");
                     try {
                         request.grant(request.getResources());
                     } catch (Exception e) {
-                        // Se qualcosa va storto, ignoriamo il permesso invece di far crashare l'app
+                        // Ignora
                     }
                 }
             }
 
             @Override
             public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, android.os.Message resultMsg) {
-                // Gestiamo finestre nuove aprendo il browser esterno
                 WebView.HitTestResult result = view.getHitTestResult();
                 String url = result != null ? result.getExtra() : null;
+
                 if (url != null) {
                     Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                     try {
                         startActivity(browserIntent);
                     } catch (Exception e) {
-                        // Nessun browser disponibile, ignora
+                        // Ignora
                     }
                 }
                 return false;
             }
         });
     }
-
-    private void showRewardedAd() {
-    if (rewardedAd == null) {
-        return;
-    }
-
-    rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-        @Override
-        public void onAdDismissedFullScreenContent() {
-            rewardedAd = null;
-            loadRewardedAd();
-        }
-
-        @Override
-        public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
-            rewardedAd = null;
-            loadRewardedAd();
-        }
-    });
-
-    rewardedAd.show(this, rewardItem -> {
-        // reward ricevuto — gestione JS al prossimo step
-    });
-    }
-
-    public class PlutooJsBridge {
-    @JavascriptInterface
-    public void showRewarded() {
-        runOnUiThread(() -> showRewardedAd());
-    }
-    }
-
-    private void notifyRewardEarned() {
-    if (webView == null) return;
-    runOnUiThread(() -> {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            webView.evaluateJavascript("window.onRewardEarned && window.onRewardEarned();", null);
-        }
-    });
-}
-
-private void notifyRewardFailed() {
-    if (webView == null) return;
-    runOnUiThread(() -> {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            webView.evaluateJavascript("window.onRewardFailed && window.onRewardFailed();", null);
-        }
-    });
-}
 
     @Override
     public void onBackPressed() {
@@ -289,17 +284,14 @@ private void notifyRewardFailed() {
             return;
         }
 
-        // Gestione back via JS (per chiudere storie, modali, ecc.)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             webView.evaluateJavascript(
                     "window.handleAndroidBack && window.handleAndroidBack();",
                     value -> {
-                        // Se JS ha gestito il back (ritorna "HANDLED"), non facciamo altro
                         if ("\"HANDLED\"".equals(value)) {
                             return;
                         }
 
-                        // Altrimenti comportamento standard WebView
                         if (webView.canGoBack()) {
                             webView.goBack();
                         } else {
@@ -308,7 +300,6 @@ private void notifyRewardFailed() {
                     }
             );
         } else {
-            // Vecchie versioni senza evaluateJavascript
             if (webView.canGoBack()) {
                 webView.goBack();
             } else {
@@ -329,10 +320,12 @@ private void notifyRewardFailed() {
         }
 
         if (adView != null) {
-    adView.destroy();
-    adView = null;
+            adView.destroy();
+            adView = null;
         }
-        
+
+        rewardedAd = null;
+
         super.onDestroy();
     }
 }
