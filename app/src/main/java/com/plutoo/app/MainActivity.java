@@ -246,6 +246,12 @@ getWindow().getDecorView().setSystemUiVisibility(
             webView.destroy();
             webView = null;
         }
+
+        if (adView != null) {
+    adView.destroy();
+    adView = null;
+        }
+        
         super.onDestroy();
     }
 }
