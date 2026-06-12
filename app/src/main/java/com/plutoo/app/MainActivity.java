@@ -126,6 +126,8 @@ getWindow().getDecorView().setSystemUiVisibility(
         // Configurazione WebView
 setupWebView();
 
+webView.addJavascriptInterface(new PlutooJsBridge(), "AndroidBridge");
+
 // Precarica Rewarded AdMob
 loadRewardedAd();
 
@@ -254,6 +256,31 @@ webView.loadUrl("https://plutoo-official.vercel.app/?app=android");
         // reward ricevuto — gestione JS al prossimo step
     });
     }
+
+    public class PlutooJsBridge {
+    @JavascriptInterface
+    public void showRewarded() {
+        runOnUiThread(() -> showRewardedAd());
+    }
+    }
+
+    private void notifyRewardEarned() {
+    if (webView == null) return;
+    runOnUiThread(() -> {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            webView.evaluateJavascript("window.onRewardEarned && window.onRewardEarned();", null);
+        }
+    });
+}
+
+private void notifyRewardFailed() {
+    if (webView == null) return;
+    runOnUiThread(() -> {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            webView.evaluateJavascript("window.onRewardFailed && window.onRewardFailed();", null);
+        }
+    });
+}
 
     @Override
     public void onBackPressed() {
