@@ -63,11 +63,12 @@ adView.loadAd(new AdRequest.Builder().build());
         progressBar.setMax(100);
         progressBar.setVisibility(View.GONE);
 
-        // Aggiungo al layout
-        layout.addView(webView);
-        layout.addView(progressBar);
+    // Aggiungo al layout
+layout.addView(webView);
+layout.addView(progressBar);
+layout.addView(adView);
 
-        setContentView(layout);
+setContentView(layout);
 
 getWindow().getDecorView().setSystemUiVisibility(
         View.SYSTEM_UI_FLAG_FULLSCREEN |
