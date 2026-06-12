@@ -40,6 +40,27 @@ public class MainActivity extends AppCompatActivity {
     private static final String REWARDED_AD_UNIT_ID =
         "ca-app-pub-5458345293928736/7078342992";
 
+    private void loadRewardedAd() {
+
+    RewardedAd.load(
+            this,
+            REWARDED_AD_UNIT_ID,
+            new AdRequest.Builder().build(),
+            new RewardedAdLoadCallback() {
+
+                @Override
+                public void onAdLoaded(RewardedAd ad) {
+                    rewardedAd = ad;
+                }
+
+                @Override
+                public void onAdFailedToLoad(LoadAdError loadAdError) {
+                    rewardedAd = null;
+                }
+            }
+    );
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
