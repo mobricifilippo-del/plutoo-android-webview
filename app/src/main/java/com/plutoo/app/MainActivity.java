@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Layout contenitore
         FrameLayout layout = new FrameLayout(this);
+        adView = new AdView(this);
 
         // WebView
         webView = new WebView(this);
