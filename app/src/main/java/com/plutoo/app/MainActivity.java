@@ -231,6 +231,30 @@ webView.loadUrl("https://plutoo-official.vercel.app/?app=android");
         });
     }
 
+    private void showRewardedAd() {
+    if (rewardedAd == null) {
+        return;
+    }
+
+    rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+        @Override
+        public void onAdDismissedFullScreenContent() {
+            rewardedAd = null;
+            loadRewardedAd();
+        }
+
+        @Override
+        public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
+            rewardedAd = null;
+            loadRewardedAd();
+        }
+    });
+
+    rewardedAd.show(this, rewardItem -> {
+        // reward ricevuto — gestione JS al prossimo step
+    });
+    }
+
     @Override
     public void onBackPressed() {
         if (webView == null) {
