@@ -57,12 +57,18 @@ adView.setAdUnitId("ca-app-pub-5458345293928736/3837438698");
 adView.setAdSize(AdSize.BANNER);
 adView.loadAd(new AdRequest.Builder().build());
 
-        // WebView
-        webView = new WebView(this);
-        webView.setLayoutParams(new FrameLayout.LayoutParams(
+    // WebView
+webView = new WebView(this);
+
+FrameLayout.LayoutParams webParams =
+        new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT
-        ));
+        );
+webParams.bottomMargin = AdSize.BANNER.getHeightInPixels(this);
+
+webView.setLayoutParams(webParams);
+        
 
         // Progress bar in alto
         progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
@@ -70,6 +76,7 @@ adView.loadAd(new AdRequest.Builder().build());
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 10
         ));
+        
         progressBar.setMax(100);
         progressBar.setVisibility(View.GONE);
 
