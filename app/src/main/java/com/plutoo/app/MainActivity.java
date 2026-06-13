@@ -156,10 +156,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public class PlutooJsBridge {
-        @JavascriptInterface
-        public void showRewarded() {
-            runOnUiThread(() -> showRewardedAd());
-        }
+
+    @JavascriptInterface
+    public void showRewarded() {
+        runOnUiThread(() -> showRewardedAd());
+    }
+
+    @JavascriptInterface
+    public void openUrl(String url) {
+        runOnUiThread(() -> {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            } catch (Exception e) {
+                // nessun handler disponibile
+            }
+        });
+    }
     }
 
     private void notifyRewardEarned() {
