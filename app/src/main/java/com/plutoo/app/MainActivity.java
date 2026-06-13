@@ -297,60 +297,51 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public boolean onShowFileChooser(
-                    WebView webView,
-                    ValueCallback<Uri[]> filePathCallbackNew,
-                    FileChooserParams fileChooserParams
-            ) {
-                if (filePathCallback != null) {
-                    filePathCallback.onReceiveValue(null);
-                }
+public boolean onShowFileChooser(
+        WebView webView,
+        ValueCallback<Uri[]> filePathCallbackNew,
+        FileChooserParams fileChooserParams
+) {
+    if (filePathCallback != null) {
+        filePathCallback.onReceiveValue(null);
+    }
 
-                filePathCallback = filePathCallbackNew;
+    filePathCallback = filePathCallbackNew;
 
-                Intent intent;
+    Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+    intent.addCategory(Intent.CATEGORY_OPENABLE);
+    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                    intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-                } else {
-                    intent = new Intent(Intent.ACTION_GET_CONTENT);
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                }
+    boolean allowMultiple = false;
+    String[] acceptTypes = null;
 
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
+    if (fileChooserParams != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        acceptTypes = fileChooserParams.getAcceptTypes();
+        allowMultiple = fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE;
+    }
 
-                boolean allowMultiple = false;
-                String[] acceptTypes = null;
+    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, allowMultiple);
 
-                if (fileChooserParams != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    acceptTypes = fileChooserParams.getAcceptTypes();
-                    allowMultiple = fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE;
-                }
+    String mimeType = resolveMimeType(acceptTypes);
+    intent.setType(mimeType);
 
-                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, allowMultiple);
+    String[] cleanedTypes = cleanAcceptTypes(acceptTypes);
+    if (cleanedTypes.length > 0) {
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, cleanedTypes);
+    }
 
-                String mimeType = resolveMimeType(acceptTypes);
-                intent.setType(mimeType);
+    try {
+        startActivityForResult(
+                Intent.createChooser(intent, "Seleziona file"),
+                FILE_CHOOSER_REQUEST
+        );
+    } catch (ActivityNotFoundException e) {
+        filePathCallback = null;
+        return false;
+    }
 
-                String[] cleanedTypes = cleanAcceptTypes(acceptTypes);
-                if (cleanedTypes.length > 0) {
-                    intent.putExtra(Intent.EXTRA_MIME_TYPES, cleanedTypes);
-                }
-
-                try {
-                    startActivityForResult(
-                            Intent.createChooser(intent, "Seleziona file"),
-                            FILE_CHOOSER_REQUEST
-                    );
-                } catch (ActivityNotFoundException e) {
-                    filePathCallback = null;
-                    return false;
-                }
-
-                return true;
-            }
+    return true;
+}
 
             @Override
             public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, android.os.Message resultMsg) {
