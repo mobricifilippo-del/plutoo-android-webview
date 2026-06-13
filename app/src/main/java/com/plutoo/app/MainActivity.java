@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.content.Intent;
+import android.content.ClipData;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 
@@ -24,6 +25,7 @@ import android.webkit.WebViewClient;
 import android.webkit.GeolocationPermissions;
 import android.webkit.PermissionRequest;
 
+import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
@@ -40,6 +42,10 @@ public class MainActivity extends AppCompatActivity {
     private AdView adView;
     private RewardedAd rewardedAd;
     private ValueCallback<Uri[]> filePathCallback;
+
+    private boolean rewardShowing = false;
+    private boolean rewardEarnedPending = false;
+
     private static final int FILE_CHOOSER_REQUEST = 1001;
 
     private static final String REWARDED_AD_UNIT_ID =
@@ -126,37 +132,47 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showRewardedAd() {
+        if (rewardShowing) return;
+
         if (rewardedAd == null) {
             notifyRewardFailed();
             loadRewardedAd();
             return;
         }
 
-        final boolean[] rewardEarned = {false};
+        rewardShowing = true;
+        rewardEarnedPending = false;
 
         rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
             @Override
             public void onAdDismissedFullScreenContent() {
                 rewardedAd = null;
+                rewardShowing = false;
+
+                boolean earned = rewardEarnedPending;
+                rewardEarnedPending = false;
+
                 loadRewardedAd();
 
-                if (!rewardEarned[0]) {
+                if (earned) {
+                    notifyRewardEarned();
+                } else {
                     notifyRewardFailed();
                 }
             }
 
             @Override
-            public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
+            public void onAdFailedToShowFullScreenContent(AdError adError) {
                 rewardedAd = null;
+                rewardShowing = false;
+                rewardEarnedPending = false;
+
                 loadRewardedAd();
                 notifyRewardFailed();
             }
         });
 
-        rewardedAd.show(this, rewardItem -> {
-            rewardEarned[0] = true;
-            notifyRewardEarned();
-        });
+        rewardedAd.show(this, rewardItem -> rewardEarnedPending = true);
     }
 
     public class PlutooJsBridge {
@@ -164,32 +180,42 @@ public class MainActivity extends AppCompatActivity {
         public void showRewarded() {
             runOnUiThread(() -> showRewardedAd());
         }
+
+        @JavascriptInterface
+        public void openUrl(String url) {
+            runOnUiThread(() -> openExternalUrl(url));
+        }
     }
 
     private void notifyRewardEarned() {
-        if (webView == null) return;
+        evaluateJavascriptSafe("window.onRewardEarned && window.onRewardEarned();");
+    }
+
+    private void notifyRewardFailed() {
+        evaluateJavascriptSafe("window.onRewardFailed && window.onRewardFailed();");
+    }
+
+    private void evaluateJavascriptSafe(String js) {
+        if (webView == null || js == null) return;
 
         runOnUiThread(() -> {
+            if (webView == null) return;
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                webView.evaluateJavascript(
-                        "window.onRewardEarned && window.onRewardEarned();",
-                        null
-                );
+                webView.evaluateJavascript(js, null);
+            } else {
+                webView.loadUrl("javascript:" + js);
             }
         });
     }
 
-    private void notifyRewardFailed() {
-        if (webView == null) return;
+    private void openExternalUrl(String url) {
+        if (url == null || url.trim().isEmpty()) return;
 
-        runOnUiThread(() -> {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                webView.evaluateJavascript(
-                        "window.onRewardFailed && window.onRewardFailed();",
-                        null
-                );
-            }
-        });
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(intent);
+        } catch (Exception ignored) {}
     }
 
     private void setupWebView() {
@@ -219,15 +245,24 @@ public class MainActivity extends AppCompatActivity {
                         return false;
                     }
 
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    try {
-                        startActivity(intent);
-                    } catch (Exception e) {
-                        // Ignora se non c'è app compatibile
-                    }
+                    openExternalUrl(url);
                     return true;
                 }
+
                 return false;
+            }
+
+            @SuppressWarnings("deprecation")
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (url == null) return false;
+
+                if (url.startsWith("http://") || url.startsWith("https://")) {
+                    return false;
+                }
+
+                openExternalUrl(url);
+                return true;
             }
 
             @Override
@@ -258,28 +293,56 @@ public class MainActivity extends AppCompatActivity {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     try {
                         request.grant(request.getResources());
-                    } catch (Exception e) {
-                        // Ignora
-                    }
+                    } catch (Exception ignored) {}
                 }
             }
 
             @Override
-            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallbackNew,
-                    FileChooserParams fileChooserParams) {
+            public boolean onShowFileChooser(
+                    WebView webView,
+                    ValueCallback<Uri[]> filePathCallbackNew,
+                    FileChooserParams fileChooserParams
+            ) {
                 if (filePathCallback != null) {
                     filePathCallback.onReceiveValue(null);
                 }
 
                 filePathCallback = filePathCallbackNew;
 
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                Intent intent;
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                } else {
+                    intent = new Intent(Intent.ACTION_GET_CONTENT);
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                }
+
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("image/*");
+
+                boolean allowMultiple = false;
+                String[] acceptTypes = null;
+
+                if (fileChooserParams != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    acceptTypes = fileChooserParams.getAcceptTypes();
+                    allowMultiple = fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE;
+                }
+
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, allowMultiple);
+
+                String mimeType = resolveMimeType(acceptTypes);
+                intent.setType(mimeType);
+
+                String[] cleanedTypes = cleanAcceptTypes(acceptTypes);
+                if (cleanedTypes.length > 0) {
+                    intent.putExtra(Intent.EXTRA_MIME_TYPES, cleanedTypes);
+                }
 
                 try {
                     startActivityForResult(
-                            Intent.createChooser(intent, "Seleziona immagine"),
+                            Intent.createChooser(intent, "Seleziona file"),
                             FILE_CHOOSER_REQUEST
                     );
                 } catch (ActivityNotFoundException e) {
@@ -295,17 +358,66 @@ public class MainActivity extends AppCompatActivity {
                 WebView.HitTestResult result = view.getHitTestResult();
                 String url = result != null ? result.getExtra() : null;
 
-                if (url != null) {
-                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    try {
-                        startActivity(browserIntent);
-                    } catch (Exception e) {
-                        // Ignora
-                    }
+                if (url != null && !url.trim().isEmpty()) {
+                    openExternalUrl(url);
+                    return true;
                 }
+
                 return false;
             }
         });
+    }
+
+    private String resolveMimeType(String[] acceptTypes) {
+        if (acceptTypes == null || acceptTypes.length == 0) {
+            return "*/*";
+        }
+
+        boolean hasImage = false;
+        boolean hasVideo = false;
+        boolean hasAny = false;
+
+        for (String type : acceptTypes) {
+            if (type == null) continue;
+
+            String t = type.trim().toLowerCase();
+
+            if (t.isEmpty()) continue;
+            if ("*/*".equals(t)) hasAny = true;
+            if (t.startsWith("image/")) hasImage = true;
+            if (t.startsWith("video/")) hasVideo = true;
+        }
+
+        if (hasAny || (hasImage && hasVideo)) return "*/*";
+        if (hasImage) return "image/*";
+        if (hasVideo) return "video/*";
+
+        return "*/*";
+    }
+
+    private String[] cleanAcceptTypes(String[] acceptTypes) {
+        if (acceptTypes == null || acceptTypes.length == 0) {
+            return new String[]{"image/*", "video/*"};
+        }
+
+        java.util.ArrayList<String> cleaned = new java.util.ArrayList<>();
+
+        for (String type : acceptTypes) {
+            if (type == null) continue;
+
+            String t = type.trim();
+
+            if (!t.isEmpty()) {
+                cleaned.add(t);
+            }
+        }
+
+        if (cleaned.isEmpty()) {
+            cleaned.add("image/*");
+            cleaned.add("video/*");
+        }
+
+        return cleaned.toArray(new String[0]);
     }
 
     @Override
@@ -340,10 +452,46 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        if (adView != null) {
+            adView.pause();
+        }
+
+        if (webView != null) {
+            webView.onPause();
+        }
+
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (webView != null) {
+            webView.onResume();
+        }
+
+        if (adView != null) {
+            adView.resume();
+        }
+    }
+
+    @Override
     protected void onDestroy() {
+        if (filePathCallback != null) {
+            filePathCallback.onReceiveValue(null);
+            filePathCallback = null;
+        }
+
+        rewardedAd = null;
+        rewardShowing = false;
+        rewardEarnedPending = false;
+
         if (webView != null) {
             webView.loadUrl("about:blank");
             webView.stopLoading();
+            webView.removeJavascriptInterface("AndroidBridge");
             webView.setWebChromeClient(null);
             webView.setWebViewClient(null);
             webView.destroy();
@@ -355,8 +503,6 @@ public class MainActivity extends AppCompatActivity {
             adView = null;
         }
 
-        rewardedAd = null;
-
         super.onDestroy();
     }
 
@@ -366,8 +512,20 @@ public class MainActivity extends AppCompatActivity {
             if (filePathCallback == null) return;
 
             Uri[] results = null;
-            if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
-                results = new Uri[]{data.getData()};
+
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                ClipData clipData = data.getClipData();
+
+                if (clipData != null && clipData.getItemCount() > 0) {
+                    results = new Uri[clipData.getItemCount()];
+
+                    for (int i = 0; i < clipData.getItemCount(); i++) {
+                        results[i] = clipData.getItemAt(i).getUri();
+                    }
+
+                } else if (data.getData() != null) {
+                    results = new Uri[]{data.getData()};
+                }
             }
 
             filePathCallback.onReceiveValue(results);
