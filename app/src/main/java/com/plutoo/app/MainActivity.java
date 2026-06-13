@@ -9,10 +9,13 @@ import android.graphics.Bitmap;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.content.Intent;
+import android.app.Activity;
+import android.content.ActivityNotFoundException;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -36,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private AdView adView;
     private RewardedAd rewardedAd;
+    private ValueCallback<Uri[]> filePathCallback;
+    private static final int FILE_CHOOSER_REQUEST = 1001;
 
     private static final String REWARDED_AD_UNIT_ID =
             "ca-app-pub-5458345293928736/7078342992";
@@ -260,6 +265,32 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallbackNew,
+                    FileChooserParams fileChooserParams) {
+                if (filePathCallback != null) {
+                    filePathCallback.onReceiveValue(null);
+                }
+
+                filePathCallback = filePathCallbackNew;
+
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("image/*");
+
+                try {
+                    startActivityForResult(
+                            Intent.createChooser(intent, "Seleziona immagine"),
+                            FILE_CHOOSER_REQUEST
+                    );
+                } catch (ActivityNotFoundException e) {
+                    filePathCallback = null;
+                    return false;
+                }
+
+                return true;
+            }
+
+            @Override
             public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, android.os.Message resultMsg) {
                 WebView.HitTestResult result = view.getHitTestResult();
                 String url = result != null ? result.getExtra() : null;
@@ -327,5 +358,22 @@ public class MainActivity extends AppCompatActivity {
         rewardedAd = null;
 
         super.onDestroy();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == FILE_CHOOSER_REQUEST) {
+            if (filePathCallback == null) return;
+
+            Uri[] results = null;
+            if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
+                results = new Uri[]{data.getData()};
+            }
+
+            filePathCallback.onReceiveValue(results);
+            filePathCallback = null;
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
     }
 }
