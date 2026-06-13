@@ -1,18 +1,16 @@
 package com.plutoo.app;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.graphics.Bitmap;
-import android.widget.FrameLayout;
-import android.widget.ProgressBar;
-import android.content.Intent;
-
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.webkit.JavascriptInterface;
+import android.webkit.MimeTypeMap;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -20,6 +18,10 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.GeolocationPermissions;
 import android.webkit.PermissionRequest;
+import android.widget.FrameLayout;
+import android.widget.ProgressBar;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
@@ -37,8 +39,13 @@ public class MainActivity extends AppCompatActivity {
     private AdView adView;
     private RewardedAd rewardedAd;
 
+    private ValueCallback<Uri[]> filePathCallback;
+    private static final int FILE_CHOOSER_REQUEST = 1001;
+
     private static final String REWARDED_AD_UNIT_ID =
             "ca-app-pub-5458345293928736/7078342992";
+
+    // ─── LIFECYCLE ────────────────────────────────────────────────────────────
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +55,10 @@ public class MainActivity extends AppCompatActivity {
 
         FrameLayout layout = new FrameLayout(this);
 
+        // Banner AdMob
         adView = new AdView(this);
+        adView.setAdUnitId("ca-app-pub-5458345293928736/3837438698");
+        adView.setAdSize(AdSize.BANNER);
 
         FrameLayout.LayoutParams adParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT,
@@ -56,13 +66,10 @@ public class MainActivity extends AppCompatActivity {
         );
         adParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
         adView.setLayoutParams(adParams);
-
-        adView.setAdUnitId("ca-app-pub-5458345293928736/3837438698");
-        adView.setAdSize(AdSize.BANNER);
         adView.loadAd(new AdRequest.Builder().build());
 
+        // WebView
         webView = new WebView(this);
-
         FrameLayout.LayoutParams webParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT
@@ -70,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
         webParams.bottomMargin = AdSize.BANNER.getHeightInPixels(this);
         webView.setLayoutParams(webParams);
 
+        // ProgressBar
         progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         progressBar.setLayoutParams(new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
@@ -100,6 +108,112 @@ public class MainActivity extends AppCompatActivity {
 
         webView.loadUrl("https://plutoo-official.vercel.app/?app=android");
     }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (adView != null) adView.pause();
+        if (webView != null) webView.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (webView != null) webView.onResume();
+        if (adView != null) adView.resume();
+    }
+
+    @Override
+    protected void onDestroy() {
+        // Chiudi callback file picker pendente
+        if (filePathCallback != null) {
+            filePathCallback.onReceiveValue(null);
+            filePathCallback = null;
+        }
+
+        rewardedAd = null;
+
+        if (adView != null) {
+            adView.destroy();
+            adView = null;
+        }
+
+        if (webView != null) {
+            webView.loadUrl("about:blank");
+            webView.stopLoading();
+            webView.setWebChromeClient(null);
+            webView.setWebViewClient(null);
+            webView.removeJavascriptInterface("AndroidBridge");
+            webView.destroy();
+            webView = null;
+        }
+
+        super.onDestroy();
+    }
+
+    // ─── BACK ─────────────────────────────────────────────────────────────────
+
+    @Override
+    public void onBackPressed() {
+        if (webView == null) {
+            super.onBackPressed();
+            return;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            webView.evaluateJavascript(
+                    "window.handleAndroidBack && window.handleAndroidBack();",
+                    value -> {
+                        if ("\"HANDLED\"".equals(value)) {
+                            return;
+                        }
+                        if (webView != null && webView.canGoBack()) {
+                            webView.goBack();
+                        } else {
+                            MainActivity.super.onBackPressed();
+                        }
+                    }
+            );
+        } else {
+            if (webView.canGoBack()) {
+                webView.goBack();
+            } else {
+                super.onBackPressed();
+            }
+        }
+    }
+
+    // ─── FILE PICKER ──────────────────────────────────────────────────────────
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode != FILE_CHOOSER_REQUEST) return;
+
+        if (filePathCallback == null) return;
+
+        Uri[] results = null;
+
+        if (resultCode == Activity.RESULT_OK && data != null) {
+            // Selezione multipla (ClipData)
+            if (data.getClipData() != null) {
+                int count = data.getClipData().getItemCount();
+                results = new Uri[count];
+                for (int i = 0; i < count; i++) {
+                    results[i] = data.getClipData().getItemAt(i).getUri();
+                }
+            } else if (data.getData() != null) {
+                // Selezione singola
+                results = new Uri[]{data.getData()};
+            }
+        }
+
+        filePathCallback.onReceiveValue(results);
+        filePathCallback = null;
+    }
+
+    // ─── ADMOB REWARD ─────────────────────────────────────────────────────────
 
     private void loadRewardedAd() {
         RewardedAd.load(
@@ -135,7 +249,10 @@ public class MainActivity extends AppCompatActivity {
                 rewardedAd = null;
                 loadRewardedAd();
 
-                if (!rewardEarned[0]) {
+                // FIX A1: notifica JS SOLO dopo chiusura, mai durante il video
+                if (rewardEarned[0]) {
+                    notifyRewardEarned();
+                } else {
                     notifyRewardFailed();
                 }
             }
@@ -148,22 +265,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Segna il reward come guadagnato, ma NON notificare JS qui
         rewardedAd.show(this, rewardItem -> {
             rewardEarned[0] = true;
-            notifyRewardEarned();
+            // Notifica avviene in onAdDismissedFullScreenContent
         });
-    }
-
-    public class PlutooJsBridge {
-        @JavascriptInterface
-        public void showRewarded() {
-            runOnUiThread(() -> showRewardedAd());
-        }
     }
 
     private void notifyRewardEarned() {
         if (webView == null) return;
-
         runOnUiThread(() -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 webView.evaluateJavascript(
@@ -176,7 +286,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void notifyRewardFailed() {
         if (webView == null) return;
-
         runOnUiThread(() -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 webView.evaluateJavascript(
@@ -186,6 +295,61 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    // ─── JAVASCRIPT BRIDGE ────────────────────────────────────────────────────
+
+    public class PlutooJsBridge {
+
+        // Reward AdMob
+        @JavascriptInterface
+        public void showRewarded() {
+            runOnUiThread(() -> showRewardedAd());
+        }
+
+        // FIX C1/E1: apertura URL esterni (Maps, browser, geo:)
+        @JavascriptInterface
+        public void openUrl(String url) {
+            if (url == null || url.isEmpty()) return;
+            runOnUiThread(() -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    // Nessuna app compatibile: ignora
+                }
+            });
+        }
+
+        // FIX D1/D2: controllo visibilità banner nativo da JS
+        @JavascriptInterface
+        public void setBannerVisible(boolean visible) {
+            if (adView == null || webView == null) return;
+            runOnUiThread(() -> {
+                if (visible) {
+                    adView.setVisibility(View.VISIBLE);
+                    // Ripristina il margine inferiore della WebView
+                    FrameLayout.LayoutParams lp =
+                            (FrameLayout.LayoutParams) webView.getLayoutParams();
+                    if (lp != null) {
+                        lp.bottomMargin = AdSize.BANNER.getHeightInPixels(MainActivity.this);
+                        webView.setLayoutParams(lp);
+                    }
+                } else {
+                    adView.setVisibility(View.GONE);
+                    // Rimuove il margine: nessuno spazio nero
+                    FrameLayout.LayoutParams lp =
+                            (FrameLayout.LayoutParams) webView.getLayoutParams();
+                    if (lp != null) {
+                        lp.bottomMargin = 0;
+                        webView.setLayoutParams(lp);
+                    }
+                }
+            });
+        }
+    }
+
+    // ─── WEBVIEW SETUP ────────────────────────────────────────────────────────
 
     private void setupWebView() {
         WebSettings webSettings = webView.getSettings();
@@ -207,44 +371,51 @@ public class MainActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                if (request != null && request.getUrl() != null) {
-                    String url = request.getUrl().toString();
+                if (request == null || request.getUrl() == null) return false;
 
-                    if (url.startsWith("http://") || url.startsWith("https://")) {
-                        return false;
-                    }
+                String url = request.getUrl().toString();
 
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    try {
-                        startActivity(intent);
-                    } catch (Exception e) {
-                        // Ignora se non c'è app compatibile
-                    }
-                    return true;
+                // HTTP/HTTPS: gestiti dal WebView
+                if (url.startsWith("http://") || url.startsWith("https://")) {
+                    return false;
                 }
-                return false;
+
+                // Schemi esterni (geo:, intent:, market:, ecc.): delega ad Android
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    // Nessuna app compatibile
+                }
+                return true;
             }
 
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                progressBar.setVisibility(View.VISIBLE);
-                progressBar.setProgress(0);
+                if (progressBar != null) {
+                    progressBar.setVisibility(View.VISIBLE);
+                    progressBar.setProgress(0);
+                }
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                progressBar.setVisibility(View.GONE);
+                if (progressBar != null) {
+                    progressBar.setVisibility(View.GONE);
+                }
             }
         });
 
         webView.setWebChromeClient(new WebChromeClient() {
+
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
-                progressBar.setProgress(newProgress);
+                if (progressBar != null) progressBar.setProgress(newProgress);
             }
 
             @Override
-            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+            public void onGeolocationPermissionsShowPrompt(
+                    String origin, GeolocationPermissions.Callback callback) {
                 callback.invoke(origin, true, false);
             }
 
@@ -259,14 +430,80 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
+            // FIX B1: file picker per tutti gli input type="file"
             @Override
-            public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, android.os.Message resultMsg) {
+            public boolean onShowFileChooser(
+                    WebView webView,
+                    ValueCallback<Uri[]> callback,
+                    FileChooserParams fileChooserParams) {
+
+                // Chiudi eventuale callback pendente precedente
+                if (filePathCallback != null) {
+                    filePathCallback.onReceiveValue(null);
+                    filePathCallback = null;
+                }
+                filePathCallback = callback;
+
+                // Determina i tipi MIME accettati
+                String[] acceptTypes = null;
+                if (fileChooserParams != null) {
+                    acceptTypes = fileChooserParams.getAcceptTypes();
+                }
+
+                String mimeType = "*/*";
+                if (acceptTypes != null && acceptTypes.length > 0) {
+                    // Filtra tipi vuoti
+                    StringBuilder sb = new StringBuilder();
+                    for (String t : acceptTypes) {
+                        if (t != null && !t.trim().isEmpty()) {
+                            if (sb.length() > 0) sb.append(",");
+                            sb.append(t.trim());
+                        }
+                    }
+                    if (sb.length() > 0) mimeType = sb.toString();
+                }
+
+                // Selezione multipla
+                boolean allowMultiple = fileChooserParams != null &&
+                        fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE;
+
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType(mimeType.contains(",") ? "*/*" : mimeType);
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                // Tipi multipli: usa EXTRA_MIME_TYPES
+                if (mimeType.contains(",")) {
+                    intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeType.split(","));
+                }
+
+                if (allowMultiple) {
+                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                }
+
+                try {
+                    startActivityForResult(
+                            Intent.createChooser(intent, "Seleziona file"),
+                            FILE_CHOOSER_REQUEST
+                    );
+                } catch (Exception e) {
+                    filePathCallback.onReceiveValue(null);
+                    filePathCallback = null;
+                    return false;
+                }
+
+                return true;
+            }
+
+            @Override
+            public boolean onCreateWindow(
+                    WebView view, boolean isDialog,
+                    boolean isUserGesture, android.os.Message resultMsg) {
                 WebView.HitTestResult result = view.getHitTestResult();
                 String url = result != null ? result.getExtra() : null;
-
                 if (url != null) {
-                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                     try {
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                         startActivity(browserIntent);
                     } catch (Exception e) {
                         // Ignora
@@ -275,57 +512,5 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (webView == null) {
-            super.onBackPressed();
-            return;
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            webView.evaluateJavascript(
-                    "window.handleAndroidBack && window.handleAndroidBack();",
-                    value -> {
-                        if ("\"HANDLED\"".equals(value)) {
-                            return;
-                        }
-
-                        if (webView.canGoBack()) {
-                            webView.goBack();
-                        } else {
-                            MainActivity.super.onBackPressed();
-                        }
-                    }
-            );
-        } else {
-            if (webView.canGoBack()) {
-                webView.goBack();
-            } else {
-                super.onBackPressed();
-            }
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (webView != null) {
-            webView.loadUrl("about:blank");
-            webView.stopLoading();
-            webView.setWebChromeClient(null);
-            webView.setWebViewClient(null);
-            webView.destroy();
-            webView = null;
-        }
-
-        if (adView != null) {
-            adView.destroy();
-            adView = null;
-        }
-
-        rewardedAd = null;
-
-        super.onDestroy();
     }
 }
