@@ -132,47 +132,46 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showRewardedAd() {
-        if (rewardShowing) return;
+    if (rewardShowing) return;
 
-        if (rewardedAd == null) {
-            notifyRewardFailed();
-            loadRewardedAd();
-            return;
-        }
+    if (rewardedAd == null) {
+        notifyRewardFailed();
+        loadRewardedAd();
+        return;
+    }
 
-        rewardShowing = true;
-        rewardEarnedPending = false;
+    rewardShowing = true;
+    rewardEarnedPending = false;
 
-        rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-            @Override
-            public void onAdDismissedFullScreenContent() {
-                rewardedAd = null;
-                rewardShowing = false;
+    rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+        @Override
+        public void onAdDismissedFullScreenContent() {
+            rewardedAd = null;
+            rewardShowing = false;
 
-                boolean earned = rewardEarnedPending;
-                rewardEarnedPending = false;
-
-                loadRewardedAd();
-
-                if (earned) {
-                    notifyRewardEarned();
-                } else {
-                    notifyRewardFailed();
-                }
-            }
-
-            @Override
-            public void onAdFailedToShowFullScreenContent(AdError adError) {
-                rewardedAd = null;
-                rewardShowing = false;
-                rewardEarnedPending = false;
-
-                loadRewardedAd();
+            if (!rewardEarnedPending) {
                 notifyRewardFailed();
             }
-        });
 
-        rewardedAd.show(this, rewardItem -> rewardEarnedPending = true);
+            rewardEarnedPending = false;
+            loadRewardedAd();
+        }
+
+        @Override
+        public void onAdFailedToShowFullScreenContent(AdError adError) {
+            rewardedAd = null;
+            rewardShowing = false;
+            rewardEarnedPending = false;
+
+            loadRewardedAd();
+            notifyRewardFailed();
+        }
+    });
+
+    rewardedAd.show(this, rewardItem -> {
+        rewardEarnedPending = true;
+        notifyRewardEarned();
+    });
     }
 
     public class PlutooJsBridge {
