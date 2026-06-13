@@ -174,6 +174,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    @JavascriptInterface
+    public void setBannerVisible(boolean visible) {
+        runOnUiThread(() -> {
+            if (adView != null) {
+                adView.setVisibility(visible ? View.VISIBLE : View.GONE);
+            }
+        });
+    }
     }
 
     private void notifyRewardEarned() {
