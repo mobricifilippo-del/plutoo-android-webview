@@ -121,68 +121,44 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showRewardedAd() {
-    if (rewardedAd == null) {
-        notifyRewardFailed();
-        loadRewardedAd();
-        return;
-    }
-
-    final boolean[] rewardEarned = {false};
-
-    rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-        @Override
-        public void onAdDismissedFullScreenContent() {
-            rewardedAd = null;
+        if (rewardedAd == null) {
+            notifyRewardFailed();
             loadRewardedAd();
+            return;
+        }
 
-            if (rewardEarned[0]) {
-                notifyRewardEarned();
-            } else {
+        final boolean[] rewardEarned = {false};
+
+        rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+            @Override
+            public void onAdDismissedFullScreenContent() {
+                rewardedAd = null;
+                loadRewardedAd();
+
+                if (!rewardEarned[0]) {
+                    notifyRewardFailed();
+                }
+            }
+
+            @Override
+            public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
+                rewardedAd = null;
+                loadRewardedAd();
                 notifyRewardFailed();
             }
-        }
+        });
 
-        @Override
-        public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
-            rewardedAd = null;
-            loadRewardedAd();
-            notifyRewardFailed();
-        }
-    });
-
-    rewardedAd.show(this, rewardItem -> {
-        rewardEarned[0] = true;
-    });
+        rewardedAd.show(this, rewardItem -> {
+            rewardEarned[0] = true;
+            notifyRewardEarned();
+        });
     }
 
     public class PlutooJsBridge {
-
-    @JavascriptInterface
-    public void showRewarded() {
-        runOnUiThread(() -> showRewardedAd());
-    }
-
-    @JavascriptInterface
-    public void openUrl(String url) {
-        runOnUiThread(() -> {
-            try {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-            } catch (Exception e) {
-                // nessun handler disponibile
-            }
-        });
-    }
-
-    @JavascriptInterface
-    public void setBannerVisible(boolean visible) {
-        runOnUiThread(() -> {
-            if (adView != null) {
-                adView.setVisibility(visible ? View.VISIBLE : View.GONE);
-            }
-        });
-    }
+        @JavascriptInterface
+        public void showRewarded() {
+            runOnUiThread(() -> showRewardedAd());
+        }
     }
 
     private void notifyRewardEarned() {
