@@ -32,6 +32,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    packaging {
+        dex {
+            useLegacyPackaging false
+        }
+    }
     
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
