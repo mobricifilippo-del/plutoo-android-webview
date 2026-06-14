@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
         adParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
         adView.setLayoutParams(adParams);
         adView.loadAd(new AdRequest.Builder().build());
+        adView.setVisibility(View.GONE);
 
         // WebView
         webView = new WebView(this);
