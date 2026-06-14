@@ -7,10 +7,10 @@ android {
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.plutoo.app.dev"
+        applicationId "com.plutoo.app"
         minSdk 24
         targetSdk 35
-        versionCode 21
+        versionCode 22
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
