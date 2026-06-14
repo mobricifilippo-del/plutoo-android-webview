@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT
         );
-        webParams.bottomMargin = AdSize.BANNER.getHeightInPixels(this);
+        webParams.bottomMargin = 0;
         webView.setLayoutParams(webParams);
 
         // ProgressBar
