@@ -154,7 +154,19 @@ public class MainActivity extends AppCompatActivity {
     // ─── BACK ─────────────────────────────────────────────────────────────────
 
     @Override
-    public void onBackPressed() {
+public void onWindowFocusChanged(boolean hasFocus) {
+    super.onWindowFocusChanged(hasFocus);
+    if (hasFocus && webView != null) {
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        );
+    }
+}
+
+@Override
+public void onBackPressed() {
         if (webView == null) {
             super.onBackPressed();
             return;
