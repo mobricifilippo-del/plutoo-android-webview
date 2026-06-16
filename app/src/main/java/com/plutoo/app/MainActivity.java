@@ -349,11 +349,40 @@ public void onBackPressed() {
             public void onBillingSetupFinished(BillingResult billingResult) {
                 billingReady = billingResult != null
                         && billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK;
+                if (billingReady) {
+                    queryPlusProductDetails();
+                }
             }
 
             @Override
             public void onBillingServiceDisconnected() {
                 billingReady = false;
+                plusProductDetails = null;
+            }
+        });
+    }
+
+    private void queryPlusProductDetails() {
+        if (billingClient == null || !billingReady) return;
+
+        QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
+                .setProductList(
+                        java.util.Collections.singletonList(
+                                QueryProductDetailsParams.Product.newBuilder()
+                                        .setProductId("plutoo_plus")
+                                        .setProductType(BillingClient.ProductType.SUBS)
+                                        .build()
+                        )
+                )
+                .build();
+
+        billingClient.queryProductDetailsAsync(params, (billingResult, productDetailsList) -> {
+            if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK
+                    && productDetailsList != null
+                    && !productDetailsList.isEmpty()) {
+                plusProductDetails = productDetailsList.get(0);
+            } else {
+                plusProductDetails = null;
             }
         });
     }
