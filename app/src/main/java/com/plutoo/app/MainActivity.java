@@ -389,6 +389,37 @@ public void onBackPressed() {
         });
     }
 
+    private void purchasePlus(String planId) {
+        if (!billingReady || billingClient == null || plusProductDetails == null) return;
+
+        java.util.List<ProductDetails.SubscriptionOfferDetails> offers =
+                plusProductDetails.getSubscriptionOfferDetails();
+        if (offers == null || offers.isEmpty()) return;
+
+        String offerToken = null;
+        for (ProductDetails.SubscriptionOfferDetails offer : offers) {
+            if (planId.equals(offer.getBasePlanId())) {
+                offerToken = offer.getOfferToken();
+                break;
+            }
+        }
+        if (offerToken == null) return;
+
+        BillingFlowParams.ProductDetailsParams productDetailsParams =
+                BillingFlowParams.ProductDetailsParams.newBuilder()
+                        .setProductDetails(plusProductDetails)
+                        .setOfferToken(offerToken)
+                        .build();
+
+        BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
+                .setProductDetailsParamsList(
+                        java.util.Collections.singletonList(productDetailsParams)
+                )
+                .build();
+
+        billingClient.launchBillingFlow(MainActivity.this, billingFlowParams);
+    }
+
     // ─── JAVASCRIPT BRIDGE ────────────────────────────────────────────────────
 
     public class PlutooJsBridge {
