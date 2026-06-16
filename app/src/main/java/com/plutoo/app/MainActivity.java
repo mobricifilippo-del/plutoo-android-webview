@@ -365,6 +365,11 @@ public void onBackPressed() {
             runOnUiThread(() -> showRewardedAd());
         }
 
+        @JavascriptInterface
+        public boolean isBillingReady() {
+            return billingReady;
+        }
+
         // FIX C1/E1: apertura URL esterni (Maps, browser, geo:)
         @JavascriptInterface
         public void openUrl(String url) {
