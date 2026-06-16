@@ -144,6 +144,12 @@ public class MainActivity extends AppCompatActivity {
 
         rewardedAd = null;
 
+        billingReady = false;
+        if (billingClient != null) {
+            billingClient.endConnection();
+            billingClient = null;
+        }
+
         if (adView != null) {
             adView.destroy();
             adView = null;
