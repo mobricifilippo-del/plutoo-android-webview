@@ -44,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private AdView adView;
     private RewardedAd rewardedAd;
+    private BillingClient billingClient;
+    private boolean billingReady = false;
 
     private ValueCallback<Uri[]> filePathCallback;
     private static final int FILE_CHOOSER_REQUEST = 1001;
