@@ -430,9 +430,15 @@ public void onBackPressed() {
             runOnUiThread(() -> showRewardedAd());
         }
 
-        @JavascriptInterface
+     @JavascriptInterface
         public boolean isBillingReady() {
             return billingReady;
+        }
+
+        @JavascriptInterface
+        public void purchasePlus(String planId) {
+            if (planId == null || planId.isEmpty()) return;
+            runOnUiThread(() -> MainActivity.this.purchasePlus(planId));
         }
 
         // FIX C1/E1: apertura URL esterni (Maps, browser, geo:)
