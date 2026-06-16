@@ -378,11 +378,12 @@ public void onBackPressed() {
 
         billingClient.queryProductDetailsAsync(params, (billingResult, productDetailsList) -> {
             if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK
-                    && productDetailsList != null
-                    && !productDetailsList.isEmpty()) {
-                plusProductDetails = productDetailsList.get(0);
-            } else {
-                plusProductDetails = null;
+        && productDetailsList != null
+        && productDetailsList.getProductDetailsList() != null
+        && !productDetailsList.getProductDetailsList().isEmpty()) {
+    plusProductDetails = productDetailsList.getProductDetailsList().get(0);
+} else {
+    plusProductDetails = null;
             }
         });
     }
