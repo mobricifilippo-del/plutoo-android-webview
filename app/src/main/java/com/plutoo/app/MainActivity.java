@@ -111,6 +111,8 @@ public class MainActivity extends AppCompatActivity {
 
         setupWebView();
 
+        initBillingClient();
+
         webView.addJavascriptInterface(new PlutooJsBridge(), "AndroidBridge");
 
         loadRewardedAd();
