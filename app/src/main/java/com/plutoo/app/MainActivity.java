@@ -319,6 +319,36 @@ public void onBackPressed() {
         });
     }
 
+    // ─── GOOGLE PLAY BILLING ──────────────────────────────────────────────────
+
+    private void initBillingClient() {
+        billingReady = false;
+
+        billingClient = BillingClient.newBuilder(this)
+                .setListener((billingResult, purchases) -> {
+                    // Nessun acquisto gestito in questo step
+                })
+                .enablePendingPurchases(
+                        PendingPurchasesParams.newBuilder()
+                                .enableOneTimeProducts()
+                                .build()
+                )
+                .build();
+
+        billingClient.startConnection(new BillingClientStateListener() {
+            @Override
+            public void onBillingSetupFinished(BillingResult billingResult) {
+                billingReady = billingResult != null
+                        && billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK;
+            }
+
+            @Override
+            public void onBillingServiceDisconnected() {
+                billingReady = false;
+            }
+        });
+    }
+
     // ─── JAVASCRIPT BRIDGE ────────────────────────────────────────────────────
 
     public class PlutooJsBridge {
