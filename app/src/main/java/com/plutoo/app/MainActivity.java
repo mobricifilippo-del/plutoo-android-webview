@@ -443,9 +443,14 @@ billingClient.launchBillingFlow(MainActivity.this, billingFlowParams);
         if (responseCode == BillingClient.BillingResponseCode.USER_CANCELED) return;
 
         if (responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
-            plusPurchaseReady = true;
-            if (pendingPlanId != null) lastPurchasedPlanId = pendingPlanId;
-            return;
+    plusPurchaseReady = true;
+    if (pendingPlanId != null) {
+        lastPurchasedPlanId = pendingPlanId;
+    }
+    notifyPlusPurchased(lastPurchasedPlanId);
+    plusPurchaseReady = false;
+    pendingPlanId = null;
+    return;
         }
 
         if (responseCode != BillingClient.BillingResponseCode.OK) return;
