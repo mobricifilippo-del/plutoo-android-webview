@@ -340,9 +340,7 @@ public void onBackPressed() {
         billingReady = false;
 
         billingClient = BillingClient.newBuilder(this)
-                .setListener((billingResult, purchases) -> {
-                    // Nessun acquisto gestito in questo step
-                })
+                .setListener((billingResult, purchases) -> handlePurchases(billingResult, purchases))
                 .enablePendingPurchases(
                         PendingPurchasesParams.newBuilder()
                                 .enableOneTimeProducts()
