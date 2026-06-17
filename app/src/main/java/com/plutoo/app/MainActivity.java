@@ -484,6 +484,9 @@ billingClient.launchBillingFlow(MainActivity.this, billingFlowParams);
                 if (pendingPlanId != null) {
                     lastPurchasedPlanId = pendingPlanId;
                 }
+                notifyPlusPurchased(lastPurchasedPlanId);
+                plusPurchaseReady = false;
+                pendingPlanId = null;
             }
         }
     }
