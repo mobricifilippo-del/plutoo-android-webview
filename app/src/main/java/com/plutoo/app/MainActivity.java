@@ -52,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
     private BillingClient billingClient;
     private boolean billingReady = false;
     private ProductDetails plusProductDetails = null;
+    private String pendingPlanId = null;
+    private String lastPurchasedPlanId = null;
+    private boolean plusPurchaseReady = false;
 
     private ValueCallback<Uri[]> filePathCallback;
     private static final int FILE_CHOOSER_REQUEST = 1001;
