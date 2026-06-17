@@ -423,6 +423,49 @@ public void onBackPressed() {
         billingClient.launchBillingFlow(MainActivity.this, billingFlowParams);
     }
 
+    private void handlePurchases(BillingResult billingResult, java.util.List<Purchase> purchases) {
+        int responseCode = billingResult.getResponseCode();
+
+        if (responseCode == BillingClient.BillingResponseCode.USER_CANCELED) return;
+
+        if (responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
+            plusPurchaseReady = true;
+            if (pendingPlanId != null) lastPurchasedPlanId = pendingPlanId;
+            return;
+        }
+
+        if (responseCode != BillingClient.BillingResponseCode.OK) return;
+
+        if (purchases == null || purchases.isEmpty()) return;
+
+        for (Purchase purchase : purchases) {
+            if (purchase.getPurchaseState() != Purchase.PurchaseState.PURCHASED) continue;
+            if (!purchase.getProducts().contains("plutoo_plus")) continue;
+
+            if (!purchase.isAcknowledged()) {
+                AcknowledgePurchaseParams ackParams =
+                        AcknowledgePurchaseParams.newBuilder()
+                                .setPurchaseToken(purchase.getPurchaseToken())
+                                .build();
+
+                billingClient.acknowledgePurchase(ackParams, ackResult -> {
+                    if (ackResult.getResponseCode()
+                            == BillingClient.BillingResponseCode.OK) {
+                        plusPurchaseReady = true;
+                        if (pendingPlanId != null) {
+                            lastPurchasedPlanId = pendingPlanId;
+                        }
+                    }
+                });
+            } else {
+                plusPurchaseReady = true;
+                if (pendingPlanId != null) {
+                    lastPurchasedPlanId = pendingPlanId;
+                }
+            }
+        }
+    }
+
     // ─── JAVASCRIPT BRIDGE ────────────────────────────────────────────────────
 
     public class PlutooJsBridge {
