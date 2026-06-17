@@ -467,15 +467,18 @@ billingClient.launchBillingFlow(MainActivity.this, billingFlowParams);
                                 .setPurchaseToken(purchase.getPurchaseToken())
                                 .build();
 
-                billingClient.acknowledgePurchase(ackParams, ackResult -> {
-                    if (ackResult.getResponseCode()
-                            == BillingClient.BillingResponseCode.OK) {
-                        plusPurchaseReady = true;
-                        if (pendingPlanId != null) {
-                            lastPurchasedPlanId = pendingPlanId;
-                        }
-                    }
-                });
+            billingClient.acknowledgePurchase(ackParams, ackResult -> {
+    if (ackResult.getResponseCode()
+            == BillingClient.BillingResponseCode.OK) {
+        plusPurchaseReady = true;
+        if (pendingPlanId != null) {
+            lastPurchasedPlanId = pendingPlanId;
+        }
+        notifyPlusPurchased(lastPurchasedPlanId);
+        plusPurchaseReady = false;
+        pendingPlanId = null;
+    }
+});
             } else {
                 plusPurchaseReady = true;
                 if (pendingPlanId != null) {
