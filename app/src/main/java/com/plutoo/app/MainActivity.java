@@ -420,7 +420,8 @@ public void onBackPressed() {
                 )
                 .build();
 
-        billingClient.launchBillingFlow(MainActivity.this, billingFlowParams);
+        pendingPlanId = planId;
+billingClient.launchBillingFlow(MainActivity.this, billingFlowParams);
     }
 
     private void handlePurchases(BillingResult billingResult, java.util.List<Purchase> purchases) {
