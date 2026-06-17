@@ -334,6 +334,19 @@ public void onBackPressed() {
         });
     }
 
+    private void notifyPlusPurchased(String planId) {
+        if (webView == null) return;
+        final String safePlanId = (planId != null) ? planId : "unknown";
+        runOnUiThread(() -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                webView.evaluateJavascript(
+                        "window.onPlusPurchased && window.onPlusPurchased('" + safePlanId + "');",
+                        null
+                );
+            }
+        });
+    }
+
     // ─── GOOGLE PLAY BILLING ──────────────────────────────────────────────────
 
     private void initBillingClient() {
