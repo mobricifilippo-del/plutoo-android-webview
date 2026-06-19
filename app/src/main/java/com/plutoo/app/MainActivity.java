@@ -11,7 +11,6 @@ import android.view.Gravity;
 import android.view.View;
 import android.graphics.Bitmap;
 import android.webkit.JavascriptInterface;
-import android.webkit.MimeTypeMap;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
