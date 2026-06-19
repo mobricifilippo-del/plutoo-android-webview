@@ -200,7 +200,7 @@ public void onBackPressed() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             webView.evaluateJavascript(
-                    "window.handleAndroidBack && window.handleAndroidBack();",
+                "window.plutooGoBack && window.plutooGoBack();",
                     value -> {
                         if ("\"HANDLED\"".equals(value)) {
                             return;
