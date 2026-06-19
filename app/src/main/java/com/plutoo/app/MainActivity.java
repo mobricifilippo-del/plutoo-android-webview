@@ -51,6 +51,10 @@ public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private ProgressBar progressBar;
     private AdView adView;
+    private boolean rewardedAdLoading = false;
+    private boolean pendingRewardRequest = false;
+    private int rewardedRetryAttempt = 0;
+    private final Handler rewardedHandler = new Handler(Looper.getMainLooper());
     private RewardedAd rewardedAd;
     private BillingClient billingClient;
     private boolean billingReady = false;
