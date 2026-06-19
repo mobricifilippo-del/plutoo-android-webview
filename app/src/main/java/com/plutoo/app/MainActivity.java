@@ -55,6 +55,29 @@ public class MainActivity extends AppCompatActivity {
     private boolean pendingRewardRequest = false;
     private int rewardedRetryAttempt = 0;
     private final Handler rewardedHandler = new Handler(Looper.getMainLooper());
+
+    private static final long REWARDED_PENDING_TIMEOUT_MS = 15000;
+
+    private final Runnable rewardedPendingTimeoutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!pendingRewardRequest) return;
+
+            pendingRewardRequest = false;
+            rewardedAdLoading = false;
+            rewardedAd = null;
+
+            Toast.makeText(
+                    MainActivity.this,
+                    "Video non disponibile. Riprova.",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            notifyRewardFailed();
+            loadRewardedAd();
+        }
+    };
+
     private RewardedAd rewardedAd;
     private BillingClient billingClient;
     private boolean billingReady = false;
@@ -282,6 +305,7 @@ public void onBackPressed() {
                     rewardedAd = ad;
                     rewardedAdLoading = false;
                     rewardedRetryAttempt = 0;
+                    rewardedHandler.removeCallbacks(rewardedPendingTimeoutRunnable);
 
                     if (pendingRewardRequest) {
                         pendingRewardRequest = false;
@@ -293,6 +317,7 @@ public void onBackPressed() {
                 public void onAdFailedToLoad(LoadAdError loadAdError) {
                     rewardedAd = null;
                     rewardedAdLoading = false;
+                    rewardedHandler.removeCallbacks(rewardedPendingTimeoutRunnable);
 
                     if (pendingRewardRequest) {
                         pendingRewardRequest = false;
@@ -325,6 +350,12 @@ public void onBackPressed() {
                 "Caricamento video...",
                 Toast.LENGTH_SHORT
         ).show();
+
+        rewardedHandler.removeCallbacks(rewardedPendingTimeoutRunnable);
+        rewardedHandler.postDelayed(
+                rewardedPendingTimeoutRunnable,
+                REWARDED_PENDING_TIMEOUT_MS
+        );
 
         loadRewardedAd();
         return;
