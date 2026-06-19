@@ -160,6 +160,11 @@ public class MainActivity extends AppCompatActivity {
 
         rewardedAd = null;
 
+        rewardedAdLoading = false;
+        pendingRewardRequest = false;
+        rewardedRetryAttempt = 0;
+        rewardedHandler.removeCallbacksAndMessages(null);
+
         billingReady = false;
         if (billingClient != null) {
             billingClient.endConnection();
