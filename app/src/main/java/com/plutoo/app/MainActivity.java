@@ -261,22 +261,50 @@ public void onBackPressed() {
     // ─── ADMOB REWARD ─────────────────────────────────────────────────────────
 
     private void loadRewardedAd() {
-        RewardedAd.load(
-                this,
-                REWARDED_AD_UNIT_ID,
-                new AdRequest.Builder().build(),
-                new RewardedAdLoadCallback() {
-                    @Override
-                    public void onAdLoaded(RewardedAd ad) {
-                        rewardedAd = ad;
-                    }
+    if (rewardedAd != null || rewardedAdLoading) {
+        return;
+    }
 
-                    @Override
-                    public void onAdFailedToLoad(LoadAdError loadAdError) {
-                        rewardedAd = null;
+    rewardedAdLoading = true;
+
+    RewardedAd.load(
+            this,
+            REWARDED_AD_UNIT_ID,
+            new AdRequest.Builder().build(),
+            new RewardedAdLoadCallback() {
+                @Override
+                public void onAdLoaded(RewardedAd ad) {
+                    rewardedAd = ad;
+                    rewardedAdLoading = false;
+                    rewardedRetryAttempt = 0;
+
+                    if (pendingRewardRequest) {
+                        pendingRewardRequest = false;
+                        showRewardedAd();
                     }
                 }
-        );
+
+                @Override
+                public void onAdFailedToLoad(LoadAdError loadAdError) {
+                    rewardedAd = null;
+                    rewardedAdLoading = false;
+
+                    if (pendingRewardRequest) {
+                        pendingRewardRequest = false;
+                        notifyRewardFailed();
+                    }
+
+                    int delayMs = Math.min(
+                            30000,
+                            (int) Math.pow(2, Math.min(rewardedRetryAttempt, 4)) * 1000
+                    );
+
+                    rewardedRetryAttempt++;
+
+                    rewardedHandler.postDelayed(() -> loadRewardedAd(), delayMs);
+                }
+            }
+    );
     }
 
     private void showRewardedAd() {
