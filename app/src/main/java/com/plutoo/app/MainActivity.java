@@ -308,41 +308,50 @@ public void onBackPressed() {
     }
 
     private void showRewardedAd() {
-        if (rewardedAd == null) {
-            notifyRewardFailed();
-            loadRewardedAd();
+    if (rewardedAd == null) {
+        if (pendingRewardRequest) {
             return;
         }
 
-        final boolean[] rewardEarned = {false};
+        pendingRewardRequest = true;
 
-        rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-            @Override
-            public void onAdDismissedFullScreenContent() {
-                rewardedAd = null;
-                loadRewardedAd();
+        Toast.makeText(
+                MainActivity.this,
+                "Caricamento video...",
+                Toast.LENGTH_SHORT
+        ).show();
 
-                // FIX A1: notifica JS SOLO dopo chiusura, mai durante il video
-                if (rewardEarned[0]) {
-                    notifyRewardEarned();
-                } else {
-                    notifyRewardFailed();
-                }
-            }
+        loadRewardedAd();
+        return;
+    }
 
-            @Override
-            public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
-                rewardedAd = null;
-                loadRewardedAd();
+    final RewardedAd adToShow = rewardedAd;
+    rewardedAd = null;
+
+    final boolean[] rewardEarned = {false};
+
+    adToShow.setFullScreenContentCallback(new FullScreenContentCallback() {
+        @Override
+        public void onAdDismissedFullScreenContent() {
+            loadRewardedAd();
+
+            if (rewardEarned[0]) {
+                notifyRewardEarned();
+            } else {
                 notifyRewardFailed();
             }
-        });
+        }
 
-        // Segna il reward come guadagnato, ma NON notificare JS qui
-        rewardedAd.show(this, rewardItem -> {
-            rewardEarned[0] = true;
-            // Notifica avviene in onAdDismissedFullScreenContent
-        });
+        @Override
+        public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
+            loadRewardedAd();
+            notifyRewardFailed();
+        }
+    });
+
+    adToShow.show(MainActivity.this, rewardItem -> {
+        rewardEarned[0] = true;
+    });
     }
 
     private void notifyRewardEarned() {
