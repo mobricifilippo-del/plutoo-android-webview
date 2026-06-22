@@ -641,7 +641,7 @@ billingClient.launchBillingFlow(MainActivity.this, billingFlowParams);
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
         webSettings.setDatabaseEnabled(true);
-        webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         webSettings.setGeolocationEnabled(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
         webSettings.setSupportZoom(false);
@@ -652,6 +652,8 @@ billingClient.launchBillingFlow(MainActivity.this, billingFlowParams);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
+
+        webView.clearCache(true);
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -688,6 +690,7 @@ billingClient.launchBillingFlow(MainActivity.this, billingFlowParams);
                 if (progressBar != null) {
                     progressBar.setVisibility(View.GONE);
                 }
+                webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
             }
         });
 
