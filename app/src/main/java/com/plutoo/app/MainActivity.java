@@ -523,12 +523,29 @@ billingClient.launchBillingFlow(MainActivity.this, billingFlowParams);
 
         if (responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
     plusPurchaseReady = true;
-    if (pendingPlanId != null) {
+
+    String resolvedPlanId = null;
+
+    if ("monthly".equals(pendingPlanId) || "yearly".equals(pendingPlanId)) {
+        resolvedPlanId = pendingPlanId;
         lastPurchasedPlanId = pendingPlanId;
+    } else if ("monthly".equals(lastPurchasedPlanId) || "yearly".equals(lastPurchasedPlanId)) {
+        resolvedPlanId = lastPurchasedPlanId;
     }
-    notifyPlusPurchased(lastPurchasedPlanId);
+
     plusPurchaseReady = false;
     pendingPlanId = null;
+
+    if (resolvedPlanId == null) {
+        Toast.makeText(
+                MainActivity.this,
+                "Abbonamento già attivo. Riapri Plutoo Plus.",
+                Toast.LENGTH_SHORT
+        ).show();
+        return;
+    }
+
+    notifyPlusPurchased(resolvedPlanId);
     return;
         }
 
