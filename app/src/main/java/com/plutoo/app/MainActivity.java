@@ -728,10 +728,29 @@ billingClient.launchBillingFlow(MainActivity.this, billingFlowParams);
             }
 
             @Override
-            public void onGeolocationPermissionsShowPrompt(
-                    String origin, GeolocationPermissions.Callback callback) {
-                callback.invoke(origin, true, false);
-            }
+public void onGeolocationPermissionsShowPrompt(
+        String origin, GeolocationPermissions.Callback callback) {
+
+    if (ContextCompat.checkSelfPermission(
+            MainActivity.this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+    ) == PackageManager.PERMISSION_GRANTED) {
+        callback.invoke(origin, true, false);
+        return;
+    }
+
+    pendingGeoOrigin = origin;
+    pendingGeoCallback = callback;
+
+    ActivityCompat.requestPermissions(
+            MainActivity.this,
+            new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            },
+            LOCATION_PERMISSION_REQUEST
+    );
+}
 
             @Override
             public void onPermissionRequest(final PermissionRequest request) {
