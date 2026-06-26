@@ -92,6 +92,11 @@ public class MainActivity extends AppCompatActivity {
     private ValueCallback<Uri[]> filePathCallback;
     private static final int FILE_CHOOSER_REQUEST = 1001;
 
+    private static final int LOCATION_PERMISSION_REQUEST = 2001;
+
+    private String pendingGeoOrigin;
+    private GeolocationPermissions.Callback pendingGeoCallback;
+
     private static final String REWARDED_AD_UNIT_ID =
             "ca-app-pub-5458345293928736/7078342992";
 
