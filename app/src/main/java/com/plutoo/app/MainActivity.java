@@ -267,6 +267,26 @@ public void onBackPressed() {
     // ─── FILE PICKER ──────────────────────────────────────────────────────────
 
     @Override
+public void onRequestPermissionsResult(
+        int requestCode,
+        String[] permissions,
+        int[] grantResults) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+    if (requestCode != LOCATION_PERMISSION_REQUEST) return;
+
+    boolean granted = grantResults.length > 0
+            && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+
+    if (pendingGeoCallback != null && pendingGeoOrigin != null) {
+        pendingGeoCallback.invoke(pendingGeoOrigin, granted, false);
+    }
+
+    pendingGeoCallback = null;
+    pendingGeoOrigin = null;
+}
+    
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
