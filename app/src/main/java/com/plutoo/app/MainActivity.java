@@ -330,8 +330,6 @@ public void onRequestPermissionsResult(
             new RewardedAdLoadCallback() {
                 @Override
                 public void onAdLoaded(RewardedAd ad) {
-
-                    Toast.makeText(MainActivity.this, "REWARD CARICATO", Toast.LENGTH_SHORT).show();
                     
                     rewardedAd = ad;
                     rewardedAdLoading = false;
