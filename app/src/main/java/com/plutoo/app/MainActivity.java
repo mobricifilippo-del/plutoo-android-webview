@@ -623,10 +623,15 @@ billingClient.launchBillingFlow(MainActivity.this, billingFlowParams);
     public class PlutooJsBridge {
 
         // Reward AdMob
-        @JavascriptInterface
-        public void showRewarded() {
-            runOnUiThread(() -> showRewardedAd());
-        }
+@JavascriptInterface
+public void showRewarded() {
+    runOnUiThread(() -> showRewardedAd());
+}
+
+@JavascriptInterface
+public void preloadRewarded() {
+    runOnUiThread(() -> loadRewardedAd());
+}
 
      @JavascriptInterface
         public boolean isBillingReady() {
