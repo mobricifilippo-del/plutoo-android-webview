@@ -175,11 +175,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        if (webView != null) webView.onResume();
-        if (adView != null) adView.resume();
-    }
+protected void onResume() {
+    super.onResume();
+    if (webView != null) webView.onResume();
+    if (adView != null) adView.resume();
+    loadRewardedAd();
+}
 
     @Override
     protected void onDestroy() {
