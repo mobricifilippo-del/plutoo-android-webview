@@ -370,7 +370,8 @@ public void onRequestPermissionsResult(
     private void showRewardedAd() {
     if (rewardedAd == null) {
         if (pendingRewardRequest) {
-            return;
+    notifyRewardFailed();
+    return;
         }
 
         pendingRewardRequest = true;
